@@ -1,0 +1,46 @@
+# Preset "Espiritualidade" — imagens claras, serenas e acolhedoras; tipografia fina e delicada.
+# Para criar um preset novo, copie este arquivo (ver docs/presets.md).
+nome: espiritualidade
+descricao: Imagens claras, serenas e acolhedoras; tipografia fina e delicada
+
+analise:
+  tom: >-
+    acolhedor, sereno, esperançoso, sem sensacionalismo; títulos curtos e gentis;
+    segunda pessoa afetuosa permitida (ex.: "Você não está só")
+  titulo_palavras: [2, 5]
+  proibido:
+    - promessas milagrosas
+    - medo
+    - urgência artificial
+    - sensacionalismo
+  diretrizes_imagem: >-
+    luz natural suave, amanhecer ou golden hour, raios de luz, névoa leve, céu aberto,
+    água calma, natureza (campos, montanhas ao longe, flores, folhas), velas, mãos em
+    gesto de cuidado; pessoas preferencialmente de costas, em silhueta ou à distância;
+    símbolos religiosos neutros.
+
+imagem:
+  estilo_sufixo: >-
+    soft natural light, serene, peaceful atmosphere, pastel tones, airy, gentle glow,
+    high key, dreamy, cinematic composition, empty space for text
+  negative_prompt: >-
+    text, letters, words, watermark, logo, dark, gloomy, horror, blood, violence,
+    harsh shadows, oversaturated, neon, cluttered, deformed hands, distorted face
+  paleta: ["#FFF8EC", "#F3E3C3", "#D8B46A", "#BFD7EA", "#B7C9A8", "#F2D7D9"]
+  simbolos: neutro
+  guidance_scale: 6.0
+  passos: 30
+
+tipografia:
+  fonte: assets/fonts/CormorantGaramond-Light.ttf
+  fonte_alternativa: assets/fonts/Raleway-Light.ttf
+  cor_escura: "#4A3F35"
+  cor_clara: "#FFFFFF"
+  sombra: { blur: 8, opacidade: 0.35 }
+  veu: { cor: "#FFF8EC", opacidade: 0.45, tipo: gradiente }
+  linhas_max: 3
+
+layouts:
+  # área segura = [x0, y0, x1, y1] em frações da largura/altura
+  longo: { area_segura: [0.06, 0.08, 0.80, 0.85] }
+  short: { area_segura: [0.10, 0.33, 0.90, 0.66] }

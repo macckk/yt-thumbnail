@@ -1,0 +1,50 @@
+# Configuração de exemplo do yt-thumbnail.
+# Copie para `config.yaml` (que fica FORA do git) e preencha com seus dados.
+# Referência completa: docs/configuracao.md
+
+caminhos:
+  saida: saida                 # artefatos por job/vídeo
+  secrets: secrets             # client_secret.json e tokens/ ficam aqui
+  presets: presets
+  prompts: prompts
+
+gpu:
+  transcricao: 0               # índice da GPU para o faster-whisper
+  imagem: 1                    # índice da GPU para o SDXL
+
+transcricao:
+  idiomas: ["pt.*", "pt"]      # idiomas de legenda aceitos (yt-dlp --sub-langs)
+  modelo_whisper: large-v3     # ou "turbo"
+  compute_type: float16
+
+analise:
+  backend: claude_code         # backend padrão (claude -p)
+  tentativas: 2                # novas tentativas se o JSON vier inválido
+  max_caracteres_transcricao: 20000
+
+imagem:
+  modelo: stabilityai/stable-diffusion-xl-base-1.0
+  variacoes: 3
+
+formatos:
+  longo:
+    geracao: [1344, 768]
+    saida: [1280, 720]
+  short:
+    geracao: [768, 1344]
+    saida: [1080, 1920]
+
+envio:
+  pausa_segundos: [5, 10]      # pausa aleatória entre envios
+
+canais:
+  espiritual-principal:
+    channel_id: null           # preenchido pelo `yt-thumbnail auth --canal espiritual-principal`
+    shorts_capa_personalizada: false  # true só para canais no Programa de Parcerias (YPP)
+
+jobs:
+  - nome: meditacoes
+    playlist: https://www.youtube.com/playlist?list=SUA_PLAYLIST_AQUI
+    canal: espiritual-principal
+    preset: espiritualidade
+    tipos: [longo]             # adicione `short` para também gerar capas de Shorts

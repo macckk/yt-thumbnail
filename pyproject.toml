@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "yt-thumbnail"
+version = "0.1.0.dev0"
+description = "Gerador automático de capas para playlists do YouTube (transcrição + Claude + SDXL local + Pillow)."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "macckk" }]
+keywords = ["youtube", "thumbnail", "sdxl", "whisper", "claude"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows",
+    "Environment :: Console",
+    "Natural Language :: Portuguese (Brazilian)",
+]
+dependencies = [
+    "yt-dlp>=2025.1.1",
+    "Pillow>=10.4",
+    "google-api-python-client>=2.140",
+    "google-auth-oauthlib>=1.2",
+    "pydantic>=2.8",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+# Instale o PyTorch com CUDA ANTES deste extra (ver docs/instalacao-windows.md),
+# senão o pip pode trazer a versão só-CPU do PyPI.
+gpu = [
+    "torch>=2.4",
+    "diffusers>=0.30",
+    "transformers>=4.44",
+    "accelerate>=0.33",
+    "faster-whisper>=1.0",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+yt-thumbnail = "yt_thumbnail.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/macckk/yt-thumbnail"
+Issues = "https://github.com/macckk/yt-thumbnail/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/yt_thumbnail"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

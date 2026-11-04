@@ -1,0 +1,39 @@
+# --- Segredos e dados pessoais (NUNCA versionar) ---
+secrets/
+config.yaml
+.env
+client_secret*.json
+token*.json
+
+# --- Artefatos gerados ---
+saida/
+*.log
+
+# --- Modelos e caches ---
+models/
+modelos/
+.cache/
+*.safetensors
+*.ckpt
+*.bin
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Editores / SO ---
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
