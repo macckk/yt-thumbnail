@@ -66,7 +66,7 @@ irm https://claude.ai/install.ps1 | iex
 Se depois disso `claude` não for reconhecido, adicione a pasta ao `PATH` do usuário e reabra o terminal:
 
 ```powershell
-[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.localin", 'User')
+[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.local\bin", 'User')
 ```
 
 Rode `claude` uma vez para fazer login e teste o modo headless usado pela análise:
@@ -123,10 +123,10 @@ Um arranjo comum: o código é editado num PC sem GPU e executado no PC com as G
        User SEU_USUARIO
        IdentityFile ~/.ssh/id_ed25519
    ```
-3. No PC das GPUs, cadastre a chave pública. Para usuários **administradores** o Windows lê só `C:\ProgramData\sshdministrators_authorized_keys`, que precisa de permissão restrita:
+3. No PC das GPUs, cadastre a chave pública. Para usuários **administradores** o Windows lê só `C:\ProgramData\ssh\administrators_authorized_keys`, que precisa de permissão restrita:
    ```powershell
-   Add-Content C:\ProgramData\sshdministrators_authorized_keys 'ssh-ed25519 AAAA... comentario' -Encoding ascii
-   icacls C:\ProgramData\sshdministrators_authorized_keys /inheritance:r /grant '*S-1-5-32-544:F' /grant 'SYSTEM:F'
+   Add-Content C:\ProgramData\ssh\administrators_authorized_keys 'ssh-ed25519 AAAA... comentario' -Encoding ascii
+   icacls C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant '*S-1-5-32-544:F' /grant 'SYSTEM:F'
    ```
 4. O código vai de um PC para o outro pelo GitHub (`git push` aqui, `git pull` lá). O shell padrão do SSH no Windows é o `cmd`; para PowerShell use `ssh pc-gpu "powershell -NoProfile -Command ..."`.
 
