@@ -36,6 +36,8 @@ analise:
 imagem:
   modelo: stabilityai/stable-diffusion-xl-base-1.0
   variacoes: 3
+  attention_slicing: false     # true se faltar VRAM (um pouco mais lento)
+  cpu_offload: false           # true só se ainda faltar VRAM (bem mais lento, usa mais RAM)
 
 formatos:
   longo:

@@ -404,5 +404,84 @@ def analisar(
         raise typer.Exit(1)
 
 
+@app.command()
+def gerar(
+    job: OpcaoJob = None,
+    ids: OpcaoIds = None,
+    tipo: OpcaoTipo = None,
+    variacoes: Annotated[
+        int | None,
+        typer.Option("--variacoes", min=1, max=10, help="Variações por vídeo (padrão: config)."),
+    ] = None,
+    forcar: OpcaoForcar = False,
+    limite: OpcaoLimite = None,
+    config: OpcaoConfig = None,
+) -> None:
+    """Gera as imagens de fundo (sem texto) com SDXL na GPU de imagem.
+
+    Usa o prompt_imagem da análise + estilo e prompt negativo do preset. Grava base_N.png e
+    imagens.json (seeds) e registra o status `imagens_geradas`.
+    """
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.imagem import GeradorSDXL, gerar_job
+
+    cfg = _carregar(config)
+    ic = cfg.imagem
+    n = variacoes or ic.variacoes
+    presets = cfg.validar_presets()
+    gerador = GeradorSDXL(
+        ic.modelo,
+        cfg.gpu.imagem,
+        attention_slicing=ic.attention_slicing,
+        cpu_offload=ic.cpu_offload,
+    )
+    formatos = {
+        "longo": (cfg.formatos.longo.geracao, cfg.formatos.longo.saida),
+        "short": (cfg.formatos.short.geracao, cfg.formatos.short.saida),
+    }
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for j in _jobs_selecionados(cfg, job):
+            tipos = _tipos_do_job(j, tipo)
+            if not tipos:
+                console.print(f"[yellow]{j.nome}:[/] o tipo {tipo} não está em `tipos` do job.")
+                continue
+            with console.status(f"[bold]{j.nome}[/]: preparando...") as status:
+
+                def progresso(video_id: str, i: int, total: int, _s=status, _j=j) -> None:
+                    _s.update(
+                        f"[bold]{_j.nome}[/]: gerando {i}/{total} — {video_id} "
+                        "(a 1ª vez carrega o SDXL, ~1 min)"
+                    )
+
+                r = gerar_job(
+                    job=j.nome,
+                    tipos=tipos,
+                    pasta_saida=cfg.pasta_saida,
+                    estado=estado,
+                    gerador=gerador,
+                    preset=presets[j.preset],
+                    formatos=formatos,
+                    variacoes=n,
+                    ids=_ids(ids),
+                    forcar=forcar,
+                    limite=limite,
+                    ao_progredir=progresso,
+                )
+            tempos = [d.segundos / max(len(d.seeds), 1) for d in r.feitos.values()]
+            media = f", {sum(tempos) / len(tempos):.0f} s por imagem" if tempos else ""
+            console.print(
+                f"[bold]{j.nome}[/]: {len(r.feitos)} vídeo(s) com imagens novas ({n} cada{media}); "
+                f"{len(r.existentes)} já gerado(s); {len(r.erros)} erro(s)."
+            )
+            for vid, msg in r.erros.items():
+                console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
+            falhou = falhou or bool(r.erros)
+    if falhou:
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()

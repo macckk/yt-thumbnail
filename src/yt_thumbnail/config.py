@@ -85,6 +85,10 @@ class ImagemCfg(_Modelo):
 
     modelo: str = "stabilityai/stable-diffusion-xl-base-1.0"
     variacoes: int = Field(3, ge=1, le=10)
+    attention_slicing: bool = False
+    """Reduz o pico de VRAM (um pouco mais lento)."""
+    cpu_offload: bool = False
+    """Mantém partes do modelo na RAM e move para a GPU sob demanda (bem mais lento)."""
 
 
 class Formato(_Modelo):
