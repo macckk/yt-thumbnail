@@ -173,6 +173,8 @@ class GeradorSDXL:
         self.attention_slicing = attention_slicing
         self.cpu_offload = cpu_offload
         self._pipe: Any = None
+        self._pipe_img: Any = None
+        """Com GPUs divididas: mesmo UNet/VAE, sem codificadores (execução na GPU de imagem)."""
 
     @property
     def divide_gpus(self) -> bool:
@@ -205,12 +207,24 @@ class GeradorSDXL:
             pipe.vae.to(f"cuda:{self.gpu}")
             pipe.text_encoder.to(f"cuda:{self.gpu_texto}")
             pipe.text_encoder_2.to(f"cuda:{self.gpu_texto}")
+            # sem os codificadores, o diffusers executa na GPU do UNet/VAE
+            self._pipe_img = StableDiffusionXLPipeline(
+                vae=pipe.vae,
+                text_encoder=None,
+                text_encoder_2=None,
+                tokenizer=pipe.tokenizer,
+                tokenizer_2=pipe.tokenizer_2,
+                unet=pipe.unet,
+                scheduler=pipe.scheduler,
+            )
         else:
             pipe.to(f"cuda:{self.gpu}")
         _ativar_vae_tiling(pipe)
         if self.attention_slicing:
             _ativar_attention_slicing(pipe)
         pipe.set_progress_bar_config(disable=True)
+        if self._pipe_img is not None:
+            self._pipe_img.set_progress_bar_config(disable=True)
         self._pipe = pipe
         return pipe
 
@@ -247,7 +261,7 @@ class GeradorSDXL:
                 negative_prompt_2=p.negative_prompt,
             )
         destino = torch.device(f"cuda:{self.gpu}")
-        resultado = pipe(
+        resultado = self._pipe_img(
             prompt_embeds=emb.to(destino),
             negative_prompt_embeds=emb_neg.to(destino),
             pooled_prompt_embeds=pooled.to(destino),
