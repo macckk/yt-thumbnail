@@ -24,4 +24,22 @@ O campo `nome` deve ser igual ao nome do arquivo. Chaves desconhecidas são reje
 - `tipografia.veu.tipo`: `gradiente`, `solido` ou `nenhum`.
 - `layouts.<tipo>.area_segura`: `[x0, y0, x1, y1]` em frações (0–1) da imagem.
 
-Os detalhes de cada camada serão documentados nas fases 3 (análise), 4 (imagem) e 5 (tipografia).
+## Camada de análise
+
+Usada por `yt-thumbnail analisar`. O prompt é o template `prompts/analise.md` com estes campos do preset:
+
+| Chave | Vira no prompt |
+|---|---|
+| `analise.tom` | "Tom do título" |
+| `analise.titulo_palavras` | "entre N e M palavras" — e é **validado**: título fora da faixa é recusado e o modelo tenta de novo |
+| `analise.proibido` | lista de temas/abordagens proibidos |
+| `analise.diretrizes_imagem` | o que a cena deve ter (luz, natureza, pessoas de costas...) |
+| `imagem.simbolos` | `neutro` pede para evitar símbolos de uma religião específica |
+
+O `estilo_sufixo` e o `negative_prompt` **não** vão para o Claude: são somados ao `prompt_imagem` pelo programa na geração da imagem (Fase 4).
+
+### Editar o template
+
+`prompts/analise.md` é texto livre em Markdown. Os marcadores entre chaves são substituídos: `{tipo}`, `{titulo}`, `{descricao}`, `{transcricao}`, `{preset}`, `{tom}`, `{titulo_min}`, `{titulo_max}`, `{proibido}`, `{diretrizes_imagem}`, `{simbolos}`. Outras chaves (como o exemplo de JSON) ficam como estão. Mantenha o formato de resposta: os campos do JSON são validados. Para usar outro arquivo, defina `analise.template`.
+
+Os detalhes das camadas de imagem e tipografia serão documentados nas fases 4 e 5.

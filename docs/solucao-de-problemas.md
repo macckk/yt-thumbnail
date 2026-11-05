@@ -92,6 +92,24 @@ Veja [CUDA e cuDNN](#cuda-e-cudnn). O yt-thumbnail já procura as DLLs dos pacot
 
 Não havia legenda e o Whisper não encontrou fala (menos de 20 letras). Normal em Shorts só com música; a análise usará título e descrição. Se houver fala, tente `--forcar-whisper`.
 
+## Análise (Claude Code)
+
+### `O Claude Code não está autenticado nesta sessão`
+
+Rode `claude` uma vez e faça login. Se o yt-thumbnail roda por **SSH**, veja ["claude -p responde Not logged in por SSH"](#claude--p-responde-not-logged-in-por-ssh).
+
+### `resposta inválida após N tentativa(s)`
+
+O modelo não devolveu um JSON válido ou o título ficou fora da faixa de palavras do preset. Rode de novo só esse vídeo (`yt-thumbnail analisar --ids ID --forcar`); se repetir, aumente `analise.tentativas` ou ajuste o template.
+
+### `error: unknown option '--json-schema'` (ou `--tools`)
+
+Sua versão do Claude Code é antiga: atualize (`claude update`) ou defina `analise.saida_estruturada: false`.
+
+### Muito lento ou `não respondeu em 300 s`
+
+Aumente `analise.timeout_segundos` ou use um modelo mais rápido em `analise.modelo` (ex.: `sonnet`).
+
 ## Configuração
 
 ### `Arquivo de configuração config.yaml não encontrado`

@@ -65,6 +65,18 @@ yt-thumbnail transcrever --job palestras --limite 3
 yt-thumbnail transcrever --ids ID_DO_VIDEO --forcar-whisper
 ```
 
+### `yt-thumbnail analisar [--job] [--ids] [--tipo] [--forcar] [--limite N]`
+
+Para cada vídeo transcrito, envia título, descrição, transcrição e o tom do preset ao backend de análise (padrão: Claude Code, `claude -p`) e recebe o **título da capa** e o **prompt de imagem**. Grava `analise.json`, registra `analisado` e mostra uma tabela com os títulos gerados.
+
+- A resposta é validada (esquema JSON e tamanho do título definido no preset); se vier inválida, o modelo recebe o motivo e tenta de novo (até `analise.tentativas` vezes a mais).
+- Se o backend não puder ser usado (Claude Code ausente ou sem login), o comando para logo no primeiro vídeo, com a instrução do que fazer.
+
+```powershell
+yt-thumbnail analisar --job palestras --limite 5
+yt-thumbnail analisar --ids ID_DO_VIDEO --forcar
+```
+
 ## Comandos planejados
 
-`analisar`, `gerar`, `compor`, `revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).
+`gerar`, `compor`, `revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).

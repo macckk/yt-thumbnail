@@ -39,6 +39,8 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `estado.py` | estado por vídeo (SQLite) |
 | `playlist.py` | Fase 1: listagem e detecção de tipo |
 | `transcricao.py` | Fase 2: legenda do YouTube e faster-whisper |
+| `analise/base.py` | Fase 3: interface dos backends, prompt, validação e novas tentativas |
+| `analise/claude_code.py` | Fase 3: backend padrão (`claude -p`) |
 | `ambiente.py` | verificação do ambiente |
 | `cli.py` | comandos (Typer) |
 
@@ -103,3 +105,32 @@ No Windows, as DLLs de cuBLAS/cuDNN dos pacotes `nvidia-*-cu12` são registradas
 ```
 
 `origem`: `legenda_manual`, `legenda_auto`, `whisper` ou `sem_fala`. `legenda_erro` explica por que a legenda não foi usada quando o Whisper entrou por falha (ex.: HTTP 429).
+
+## Fase 3 — Análise
+
+1. **Prompt** (`analise.base.montar_prompt`): template `prompts/analise.md` + tipo do vídeo + título/descrição + transcrição + camada `analise` do preset. Transcrições acima de `max_caracteres_transcricao` viram três blocos (início, meio e fim) separados por `[...]`. Sem fala: o prompt diz para usar título e descrição.
+2. **Backend**: recebe o prompt e o JSON Schema da resposta e devolve texto. O padrão, `ClaudeCodeBackend`, executa `claude -p --output-format json --no-session-persistence --tools "" --json-schema <esquema>` numa pasta temporária, com o prompt pela entrada padrão, e lê `structured_output` (ou `result`).
+3. **Validação** (`validar`): pydantic (campos obrigatórios, `posicao_texto` ∈ esquerda/direita/topo/centro) + regra do preset (`titulo_palavras`). Inválido → nova chamada com o motivo anexado ao prompt, até `tentativas` vezes a mais.
+4. **Erros**: falha de backend (`ErroBackend`: sem `claude`, sem login, tempo esgotado) interrompe o lote; resposta inválida fica como erro do vídeo no estado.
+
+### Backends futuros
+
+Implemente `BackendAnalise` (atributo `nome` e método `gerar(prompt, esquema) -> str`) e registre em `analise.criar_backend`. Exemplos naturais: API da Anthropic (SDK `anthropic`) ou Ollama local, para quem não usa o Claude Code.
+
+### `analise.json`
+
+```json
+{
+  "tema": "perdão",
+  "resumo": "2-3 frases",
+  "gancho": "perdoar liberta quem perdoa",
+  "emocao": "paz",
+  "elementos_visuais": ["amanhecer", "lago calmo"],
+  "titulo_capa": "O perdão liberta",
+  "prompt_imagem": "a calm lake at sunrise ...",
+  "posicao_texto": "esquerda",
+  "backend": "claude_code",
+  "tentativas": 1,
+  "analisado_em": "2026-11-05T22:00:00+00:00"
+}
+```

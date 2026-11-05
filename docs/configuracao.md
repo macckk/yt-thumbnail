@@ -50,8 +50,12 @@ Com uma GPU só, use `0` nas duas.
 | Chave | Padrão | Descrição |
 |---|---|---|
 | `backend` | `claude_code` | backend de análise (`claude -p`) |
-| `tentativas` | `2` | novas tentativas se o JSON vier inválido |
-| `max_caracteres_transcricao` | `20000` | acima disso a transcrição é truncada/resumida |
+| `modelo` | `null` | modelo passado ao backend (ex.: `sonnet`, `opus`); `null` usa o padrão do Claude Code |
+| `tentativas` | `2` | novas tentativas se a resposta vier inválida |
+| `max_caracteres_transcricao` | `20000` | acima disso, usa início + meio + fim da transcrição |
+| `timeout_segundos` | `300` | tempo máximo de cada chamada |
+| `saida_estruturada` | `true` | passa o esquema JSON ao `claude` (`--json-schema`); desligue se a sua versão do Claude Code não aceitar |
+| `template` | `analise.md` | template do prompt, em `caminhos.prompts` |
 
 ## `imagem`
 

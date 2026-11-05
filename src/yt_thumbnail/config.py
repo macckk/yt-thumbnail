@@ -70,8 +70,14 @@ class AnaliseCfg(_Modelo):
     """Opções do backend de análise."""
 
     backend: Literal["claude_code"] = "claude_code"
+    modelo: str | None = None
+    """Modelo passado ao backend (ex.: ``sonnet``); ``None`` usa o padrão do Claude Code."""
     tentativas: int = Field(2, ge=0, le=10)
     max_caracteres_transcricao: int = Field(20000, ge=1000)
+    timeout_segundos: float = Field(300, gt=0)
+    saida_estruturada: bool = True
+    template: str = "analise.md"
+    """Arquivo do template em ``caminhos.prompts``."""
 
 
 class ImagemCfg(_Modelo):
@@ -212,6 +218,11 @@ class Config(_Modelo):
     def pasta_secrets(self) -> Path:
         """Pasta de segredos (client_secret.json e tokens/)."""
         return self.caminho(self.caminhos.secrets)
+
+    @property
+    def pasta_prompts(self) -> Path:
+        """Pasta de templates de prompt."""
+        return self.caminho(self.caminhos.prompts)
 
     @property
     def pasta_presets(self) -> Path:

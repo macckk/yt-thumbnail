@@ -26,8 +26,12 @@ transcricao:
 
 analise:
   backend: claude_code         # backend padrão (claude -p)
+  modelo: null                 # ex.: sonnet; null = padrão do Claude Code
   tentativas: 2                # novas tentativas se o JSON vier inválido
-  max_caracteres_transcricao: 20000
+  max_caracteres_transcricao: 20000  # acima disso usa início + meio + fim da transcrição
+  timeout_segundos: 300
+  saida_estruturada: true      # passa o esquema JSON ao claude (--json-schema)
+  template: analise.md         # arquivo em prompts/
 
 imagem:
   modelo: stabilityai/stable-diffusion-xl-base-1.0

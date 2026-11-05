@@ -314,5 +314,95 @@ def transcrever(
         raise typer.Exit(1)
 
 
+@app.command()
+def analisar(
+    job: OpcaoJob = None,
+    ids: OpcaoIds = None,
+    tipo: OpcaoTipo = None,
+    forcar: OpcaoForcar = False,
+    limite: OpcaoLimite = None,
+    config: OpcaoConfig = None,
+) -> None:
+    """Analisa os vídeos transcritos e gera o título da capa e o prompt de imagem.
+
+    Usa o backend de `analise.backend` (padrão: Claude Code, `claude -p`) e o tom do preset
+    do job. Grava analise.json e registra o status `analisado`.
+    """
+    from rich.markup import escape
+    from rich.table import Table
+
+    from yt_thumbnail.analise import ErroBackend, criar_backend
+    from yt_thumbnail.analise.base import analisar_job
+    from yt_thumbnail.estado import abrir_estado
+
+    cfg = _carregar(config)
+    ac = cfg.analise
+    arquivo_template = cfg.pasta_prompts / ac.template
+    if not arquivo_template.is_file():
+        console.print(f"[red]Erro:[/] template {arquivo_template} não encontrado.")
+        raise typer.Exit(1)
+    template = arquivo_template.read_text(encoding="utf-8")
+    presets = cfg.validar_presets()
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for j in _jobs_selecionados(cfg, job):
+            tipos = _tipos_do_job(j, tipo)
+            if not tipos:
+                console.print(f"[yellow]{j.nome}:[/] o tipo {tipo} não está em `tipos` do job.")
+                continue
+            try:
+                backend = criar_backend(
+                    ac.backend,
+                    modelo=ac.modelo,
+                    timeout=ac.timeout_segundos,
+                    saida_estruturada=ac.saida_estruturada,
+                )
+                with console.status(f"[bold]{j.nome}[/]: preparando...") as status:
+
+                    def progresso(video_id: str, i: int, total: int, _s=status, _j=j) -> None:
+                        _s.update(f"[bold]{_j.nome}[/]: analisando {i}/{total} — {video_id}")
+
+                    r = analisar_job(
+                        job=j.nome,
+                        tipos=tipos,
+                        pasta_saida=cfg.pasta_saida,
+                        estado=estado,
+                        backend=backend,
+                        preset=presets[j.preset],
+                        template=template,
+                        limite_caracteres=ac.max_caracteres_transcricao,
+                        tentativas_extras=ac.tentativas,
+                        ids=_ids(ids),
+                        forcar=forcar,
+                        limite=limite,
+                        ao_progredir=progresso,
+                    )
+            except ErroBackend as e:
+                console.print(f"[red]Erro no backend de análise:[/] {escape(str(e))}")
+                raise typer.Exit(1) from e
+            if r.feitos:
+                tabela = Table(title=f"Job {j.nome} — análises novas")
+                for col in ("ID", "Título da capa", "Emoção", "Posição", "Prompt de imagem"):
+                    tabela.add_column(col)
+                for vid, a in r.feitos.items():
+                    tabela.add_row(
+                        vid,
+                        escape(a.titulo_capa),
+                        escape(a.emocao),
+                        a.posicao_texto,
+                        escape(a.prompt_imagem[:70] + ("…" if len(a.prompt_imagem) > 70 else "")),
+                    )
+                console.print(tabela)
+            console.print(
+                f"[bold]{j.nome}[/]: {len(r.feitos)} analisado(s); "
+                f"{len(r.existentes)} já analisado(s); {len(r.erros)} erro(s)."
+            )
+            for vid, msg in r.erros.items():
+                console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
+            falhou = falhou or bool(r.erros)
+    if falhou:
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()
