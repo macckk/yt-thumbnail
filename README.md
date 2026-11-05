@@ -11,7 +11,7 @@ Para cada vídeo (longo ou Short) de uma playlist pública dos seus canais:
 5. gera uma página HTML para **revisão humana** (antes × depois);
 6. envia a capa aprovada pela YouTube Data API, no canal certo.
 
-> **Status:** em desenvolvimento — Fase 0 (esqueleto e verificação do ambiente). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
+> **Status:** em desenvolvimento — Fase 1 (listagem da playlist e detecção longo/Short). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
 
 ## Requisitos
 
@@ -51,6 +51,7 @@ Passo a passo completo (drivers, CUDA, PyTorch, FFmpeg): [docs/instalacao-window
 | [Configuração](docs/configuracao.md) | referência do `config.yaml` |
 | [Presets](docs/presets.md) | identidade visual e como criar novos |
 | [Uso da CLI](docs/uso-cli.md) | comandos e opções |
+| [Arquitetura](docs/arquitetura.md) | fluxo, estados e arquivos |
 | [Solução de problemas](docs/solucao-de-problemas.md) | erros comuns |
 
 ## Licença

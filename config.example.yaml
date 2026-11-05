@@ -12,6 +12,9 @@ gpu:
   transcricao: 0               # índice da GPU para o faster-whisper
   imagem: 1                    # índice da GPU para o SDXL
 
+ytdlp:
+  cookies_navegador: null      # ex.: firefox — só se o YouTube pedir login/bloquear o yt-dlp
+
 transcricao:
   idiomas: ["pt.*", "pt"]      # idiomas de legenda aceitos (yt-dlp --sub-langs)
   modelo_whisper: large-v3     # ou "turbo"

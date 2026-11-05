@@ -5,9 +5,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from rich.console import Console
 from typer.testing import CliRunner
 
-from yt_thumbnail import ambiente
+from yt_thumbnail import ambiente, cli
 from yt_thumbnail.cli import app
 
 runner = CliRunner()
@@ -35,6 +36,25 @@ def test_validar_erro(tmp_path: Path) -> None:
     r = runner.invoke(app, ["validar", "--config", str(tmp_path / "x.yaml")])
     assert r.exit_code == 1
     assert "config.example.yaml" in r.output
+
+
+def test_listar_cli(projeto: Path, monkeypatch) -> None:
+    from test_playlist import VIDEOS, FakeYtDlp
+    from yt_thumbnail import playlist
+
+    monkeypatch.setattr(playlist, "extrair_ytdlp", FakeYtDlp(VIDEOS))
+    monkeypatch.setattr(playlist, "eh_url_shorts", lambda video_id: None)
+    monkeypatch.setattr(cli, "console", Console(width=200))
+    args = ["listar", "--config", str(projeto / "config.yaml")]
+    r = runner.invoke(app, args)
+    assert r.exit_code == 0, r.output
+    assert "SHORT" in r.output and "fora do job" in r.output
+    assert "4 novo(s)" in r.output
+    r = runner.invoke(app, args)
+    assert "0 novo(s), 4 já listado(s)" in r.output
+    assert (projeto / "saida" / "meditacoes" / "short01" / "meta.json").is_file()
+    r = runner.invoke(app, [*args, "--job", "nao-existe"])
+    assert r.exit_code == 1
 
 
 def test_fontes_ausentes(raiz: Path, tmp_path: Path) -> None:

@@ -27,6 +27,12 @@ O caminho pode ser trocado com `--config` ou com a variável de ambiente `YT_THU
 
 Com uma GPU só, use `0` nas duas.
 
+## `ytdlp`
+
+| Chave | Padrão | Descrição |
+|---|---|---|
+| `cookies_navegador` | `null` | navegador de onde o yt-dlp lê cookies (`firefox`, `chrome`, `edge`...). Use só se o YouTube bloquear o yt-dlp ("Sign in to confirm you're not a bot") |
+
 ## `transcricao`
 
 | Chave | Padrão | Descrição |
@@ -85,5 +91,12 @@ Lista de associações playlist → canal → preset.
 | `canal` | sim | apelido definido em `canais` |
 | `preset` | sim | nome de um arquivo em `presets/` (sem `.yaml`) |
 | `tipos` | não | `[longo]` (padrão) ou `[longo, short]` |
+
+Todos os vídeos da playlist são listados e classificados, mas só os tipos em `tipos` seguem para as próximas etapas. Os outros aparecem como "fora do job" no `yt-thumbnail listar`.
+
+## Arquivos gerados
+
+- `saida/estado.db`: estado de cada vídeo (SQLite), ver [arquitetura.md](arquitetura.md).
+- `saida/<job>/<video_id>/`: artefatos de cada vídeo, começando por `meta.json`.
 
 A validação acusa: chaves desconhecidas (erros de digitação), job apontando para canal inexistente, preset ausente ou inválido, nomes de job repetidos e `channel_id` mal formado.

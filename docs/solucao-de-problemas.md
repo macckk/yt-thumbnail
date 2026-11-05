@@ -54,6 +54,21 @@ claude setup-token
 
 Depois, como Administrador, `Restart-Service sshd`. O token é um segredo: não o coloque em `config.yaml`, `.env` versionado nem em commits.
 
+## Listagem (yt-dlp)
+
+### `Não foi possível ler a playlist`
+
+- Confira se a playlist é **pública** ou **não listada** (privada não funciona sem login).
+- Atualize o yt-dlp: `pip install -U yt-dlp`. O YouTube muda com frequência e versões antigas param de funcionar.
+
+### `Sign in to confirm you're not a bot`
+
+O YouTube está bloqueando o acesso anônimo. Defina `ytdlp.cookies_navegador: firefox` (ou o navegador onde você está logado no YouTube) no `config.yaml`. No Chrome/Edge, feche o navegador antes, porque o arquivo de cookies fica bloqueado enquanto ele está aberto.
+
+### Um vídeo foi classificado com o tipo errado
+
+A regra é: Short = duração ≤ 180 s **e** vertical. Veja `largura`, `altura`, `duracao` e `tipo_origem` em `saida/<job>/<id>/meta.json`. `tipo_origem: url_shorts` indica que o yt-dlp não informou as dimensões e o tipo foi decidido consultando `youtube.com/shorts/<id>`. Para refazer: `yt-thumbnail listar --ids <id> --forcar`.
+
 ## Configuração
 
 ### `Arquivo de configuração config.yaml não encontrado`

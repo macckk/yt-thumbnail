@@ -13,7 +13,7 @@ import typer
 from rich.console import Console
 
 from yt_thumbnail import DOCS_PROBLEMAS, __version__
-from yt_thumbnail.config import ErroConfig, carregar_config
+from yt_thumbnail.config import Config, ErroConfig, Job, carregar_config
 
 app = typer.Typer(
     name="yt-thumbnail",
@@ -87,6 +87,130 @@ def validar(config: OpcaoConfig = None) -> None:
         console.print(
             f"  • {job.nome}: canal={job.canal} preset={job.preset} tipos={','.join(job.tipos)}"
         )
+
+
+def _carregar(config: Path | None) -> Config:
+    try:
+        return carregar_config(config)
+    except ErroConfig as e:
+        console.print(f"[red]Erro:[/] {e}")
+        raise typer.Exit(1) from e
+
+
+def _jobs_selecionados(cfg: Config, job: str | None) -> list[Job]:
+    if job is None:
+        if not cfg.jobs:
+            console.print("[red]Erro:[/] nenhum job em `jobs` no config.yaml.")
+            raise typer.Exit(1)
+        return cfg.jobs
+    try:
+        return [cfg.job(job)]
+    except ErroConfig as e:
+        console.print(f"[red]Erro:[/] {e}")
+        raise typer.Exit(1) from e
+
+
+def _ids(ids: str | None) -> list[str] | None:
+    return [i.strip() for i in ids.split(",") if i.strip()] if ids else None
+
+
+def _duracao(segundos: float | None) -> str:
+    if segundos is None:
+        return "?"
+    s = int(segundos)
+    return (
+        f"{s // 3600}:{s // 60 % 60:02d}:{s % 60:02d}" if s >= 3600 else f"{s // 60}:{s % 60:02d}"
+    )
+
+
+OpcaoJob = Annotated[
+    str | None, typer.Option("--job", "-j", help="Nome do job (padrão: todos os jobs).")
+]
+OpcaoIds = Annotated[
+    str | None, typer.Option("--ids", help="Restringe a estes IDs de vídeo, separados por vírgula.")
+]
+OpcaoForcar = Annotated[bool, typer.Option("--forcar", help="Refaz a etapa mesmo se já existir.")]
+
+
+@app.command()
+def listar(
+    job: OpcaoJob = None,
+    ids: OpcaoIds = None,
+    forcar: OpcaoForcar = False,
+    config: OpcaoConfig = None,
+) -> None:
+    """Lista os vídeos da playlist de cada job e detecta o tipo (longo/Short).
+
+    Grava saida/<job>/<video_id>/meta.json e registra o status `listado`. Não baixa mídia.
+    """
+    from rich.markup import escape
+    from rich.table import Table
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.playlist import ErroPlaylist, listar_job, opcoes_ytdlp
+
+    cfg = _carregar(config)
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for j in _jobs_selecionados(cfg, job):
+            canal = cfg.canais[j.canal]
+            with console.status(f"[bold]{j.nome}[/]: lendo a playlist...") as status:
+
+                def progresso(video_id: str, i: int, total: int, _s=status, _j=j) -> None:
+                    _s.update(f"[bold]{_j.nome}[/]: {i}/{total} — {video_id}")
+
+                try:
+                    r = listar_job(
+                        job=j.nome,
+                        url_playlist=j.playlist,
+                        pasta_saida=cfg.pasta_saida,
+                        estado=estado,
+                        channel_id_esperado=canal.channel_id,
+                        forcar=forcar,
+                        ids=_ids(ids),
+                        opcoes=opcoes_ytdlp(cfg.ytdlp.cookies_navegador),
+                        ao_progredir=progresso,
+                    )
+                except ErroPlaylist as e:
+                    console.print(f"[red]Erro no job {j.nome}:[/] {e}")
+                    falhou = True
+                    continue
+
+            tabela = Table(title=f"Job {j.nome} — {escape(j.playlist)}")
+            for col in ("#", "ID", "Tipo", "Duração", "Dimensões", "Título", ""):
+                tabela.add_column(col)
+            novos = {m.video_id for m in r.novos}
+            for m in r.todos:
+                tipo = "[magenta]SHORT[/]" if m.tipo == "short" else "[cyan]LONGO[/]"
+                if m.tipo not in j.tipos:
+                    tipo += " [dim](fora do job)[/]"
+                dims = f"{m.largura}×{m.altura}" if m.largura and m.altura else "?"
+                tabela.add_row(
+                    str(m.indice_playlist or ""),
+                    m.video_id,
+                    tipo,
+                    _duracao(m.duracao),
+                    dims,
+                    escape(m.titulo[:60]),
+                    "[green]novo[/]" if m.video_id in novos else "",
+                )
+            console.print(tabela)
+            n_short = sum(m.tipo == "short" for m in r.todos)
+            console.print(
+                f"{len(r.todos)} vídeo(s): {len(r.todos) - n_short} longo(s), {n_short} Short(s); "
+                f"{len(r.novos)} novo(s), {len(r.existentes)} já listado(s), "
+                f"{len(r.erros)} erro(s)."
+            )
+            for vid, msg in r.erros.items():
+                console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
+            if r.canal_divergente:
+                console.print(
+                    f"[yellow]Aviso:[/] {len(r.canal_divergente)} vídeo(s) não são do canal "
+                    f"{j.canal} ({canal.channel_id}); o envio deles será pulado. Confira o job."
+                )
+            falhou = falhou or bool(r.erros)
+    if falhou:
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":  # pragma: no cover

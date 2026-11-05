@@ -47,6 +47,13 @@ class Gpu(_Modelo):
     imagem: int = Field(1, ge=0)
 
 
+class YtDlp(_Modelo):
+    """Opções do yt-dlp."""
+
+    cookies_navegador: str | None = None
+    """Navegador de onde ler cookies (ex.: ``firefox``, ``chrome``); só se o YouTube bloquear."""
+
+
 class Transcricao(_Modelo):
     """Opções de transcrição (legenda do YouTube + fallback faster-whisper)."""
 
@@ -152,6 +159,7 @@ class Config(_Modelo):
 
     caminhos: Caminhos = Field(default_factory=Caminhos)
     gpu: Gpu = Field(default_factory=Gpu)
+    ytdlp: YtDlp = Field(default_factory=YtDlp)
     transcricao: Transcricao = Field(default_factory=Transcricao)
     analise: AnaliseCfg = Field(default_factory=AnaliseCfg)
     imagem: ImagemCfg = Field(default_factory=ImagemCfg)
