@@ -16,9 +16,12 @@ ytdlp:
   cookies_navegador: null      # ex.: firefox — só se o YouTube pedir login/bloquear o yt-dlp
 
 transcricao:
-  idiomas: ["pt.*", "pt"]      # idiomas de legenda aceitos (yt-dlp --sub-langs)
-  modelo_whisper: large-v3     # ou "turbo"
+  idiomas: ["pt", "pt-BR", "pt.*"]  # idiomas de legenda aceitos, em ordem de preferência
+  idioma_whisper: pt           # idioma passado ao faster-whisper
+  modelo_whisper: large-v3     # ou "turbo" (mais rápido)
   compute_type: float16
+  manter_audio: false          # true guarda o audio.m4a depois de transcrever
+  pausa_legendas_segundos: 1   # pausa entre downloads de legenda (evita bloqueio 429)
 
 analise:
   backend: claude_code         # backend padrão (claude -p)

@@ -57,9 +57,12 @@ class YtDlp(_Modelo):
 class Transcricao(_Modelo):
     """Opções de transcrição (legenda do YouTube + fallback faster-whisper)."""
 
-    idiomas: list[str] = Field(default_factory=lambda: ["pt.*", "pt"])
+    idiomas: list[str] = Field(default_factory=lambda: ["pt", "pt-BR", "pt.*"])
+    idioma_whisper: str = "pt"
     modelo_whisper: str = "large-v3"
     compute_type: str = "float16"
+    manter_audio: bool = False
+    pausa_legendas_segundos: float = Field(1.0, ge=0)
 
 
 class AnaliseCfg(_Modelo):

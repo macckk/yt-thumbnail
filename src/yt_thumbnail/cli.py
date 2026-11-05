@@ -213,5 +213,99 @@ def listar(
         raise typer.Exit(1)
 
 
+OpcaoTipo = Annotated[
+    str | None,
+    typer.Option("--tipo", help="Só este tipo: longo ou short (dentro dos `tipos` do job)."),
+]
+OpcaoLimite = Annotated[
+    int | None, typer.Option("--limite", min=1, help="Processa no máximo N vídeos pendentes.")
+]
+
+
+def _tipos_do_job(job: Job, tipo: str | None) -> list[str]:
+    if tipo is None:
+        return list(job.tipos)
+    if tipo not in ("longo", "short"):
+        console.print("[red]Erro:[/] --tipo deve ser `longo` ou `short`.")
+        raise typer.Exit(2)
+    return [tipo] if tipo in job.tipos else []
+
+
+@app.command()
+def transcrever(
+    job: OpcaoJob = None,
+    ids: OpcaoIds = None,
+    tipo: OpcaoTipo = None,
+    forcar: OpcaoForcar = False,
+    forcar_whisper: Annotated[
+        bool,
+        typer.Option(
+            "--forcar-whisper", help="Ignora a legenda do YouTube e transcreve com o Whisper."
+        ),
+    ] = False,
+    limite: OpcaoLimite = None,
+    config: OpcaoConfig = None,
+) -> None:
+    """Transcreve os vídeos listados: legenda do YouTube ou, sem ela, faster-whisper na GPU.
+
+    Grava transcricao.txt e transcricao.json (origem: legenda_manual, legenda_auto, whisper
+    ou sem_fala) e registra o status `transcrito`.
+    """
+    from collections import Counter
+
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.playlist import opcoes_ytdlp
+    from yt_thumbnail.transcricao import TranscritorWhisper, transcrever_job
+
+    cfg = _carregar(config)
+    tc = cfg.transcricao
+    transcritor = TranscritorWhisper(tc.modelo_whisper, cfg.gpu.transcricao, tc.compute_type)
+    opcoes = opcoes_ytdlp(cfg.ytdlp.cookies_navegador)
+    opcoes["sleep_interval_subtitles"] = tc.pausa_legendas_segundos
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for j in _jobs_selecionados(cfg, job):
+            tipos = _tipos_do_job(j, tipo)
+            if not tipos:
+                console.print(f"[yellow]{j.nome}:[/] o tipo {tipo} não está em `tipos` do job.")
+                continue
+            with console.status(f"[bold]{j.nome}[/]: preparando...") as status:
+
+                def progresso(video_id: str, i: int, total: int, _s=status, _j=j) -> None:
+                    _s.update(f"[bold]{_j.nome}[/]: transcrevendo {i}/{total} — {video_id}")
+
+                r = transcrever_job(
+                    job=j.nome,
+                    tipos=tipos,
+                    pasta_saida=cfg.pasta_saida,
+                    estado=estado,
+                    transcritor=transcritor,
+                    idiomas=tc.idiomas,
+                    idioma_whisper=tc.idioma_whisper,
+                    opcoes=opcoes,
+                    ids=_ids(ids),
+                    forcar=forcar,
+                    forcar_whisper=forcar_whisper,
+                    manter_audio=tc.manter_audio,
+                    limite=limite,
+                    ao_progredir=progresso,
+                )
+            origens = Counter(r.feitos.values())
+            detalhe = ", ".join(f"{n} {o}" for o, n in origens.most_common()) or "nenhum"
+            console.print(
+                f"[bold]{j.nome}[/]: {len(r.feitos)} transcrito(s) ({detalhe}); "
+                f"{len(r.existentes)} já transcrito(s); {len(r.erros)} erro(s)."
+            )
+            for vid, msg in r.erros.items():
+                console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
+            if r.erros:
+                console.print(f"  Dicas: {DOCS_PROBLEMAS}#transcrição")
+            falhou = falhou or bool(r.erros)
+    if falhou:
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()
