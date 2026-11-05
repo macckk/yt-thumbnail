@@ -151,21 +151,33 @@ def _ativar_attention_slicing(pipe: Any) -> None:
 
 
 class GeradorSDXL:
-    """Pipeline SDXL (``diffusers``) em fp16 numa GPU; carregado uma vez, no primeiro uso."""
+    """Pipeline SDXL (``diffusers``) em fp16; carregado uma vez, no primeiro uso.
+
+    Numa GPU de 8 GB, UNet (~5 GB) + codificadores de texto (~1,6 GB) não deixam espaço para
+    gerar em 1344×768. Com ``gpu_texto`` diferente de ``gpu``, os codificadores ficam na outra
+    GPU: os embeddings do prompt são calculados lá e copiados para a GPU de imagem.
+    """
 
     def __init__(
         self,
         modelo: str,
         gpu: int,
         *,
+        gpu_texto: int | None = None,
         attention_slicing: bool = False,
         cpu_offload: bool = False,
     ) -> None:
         self.modelo = modelo
         self.gpu = gpu
+        self.gpu_texto = gpu if gpu_texto is None else gpu_texto
         self.attention_slicing = attention_slicing
         self.cpu_offload = cpu_offload
         self._pipe: Any = None
+
+    @property
+    def divide_gpus(self) -> bool:
+        """``True`` se os codificadores de texto ficam numa GPU separada."""
+        return self.gpu_texto != self.gpu and not self.cpu_offload
 
     def _carregar(self) -> Any:
         if self._pipe is not None:
@@ -173,10 +185,11 @@ class GeradorSDXL:
         import torch
         from diffusers import StableDiffusionXLPipeline
 
-        if not torch.cuda.is_available() or torch.cuda.device_count() <= self.gpu:
+        n = torch.cuda.device_count() if torch.cuda.is_available() else 0
+        if n <= max(self.gpu, self.gpu_texto):
             raise RuntimeError(
-                f"GPU {self.gpu} não disponível (CUDA: {torch.cuda.is_available()}, "
-                f"GPUs: {torch.cuda.device_count()}). Ajuste gpu.imagem no config.yaml."
+                f"GPU {max(self.gpu, self.gpu_texto)} não disponível (GPUs encontradas: {n}). "
+                "Ajuste gpu.imagem / gpu.texto_sdxl no config.yaml."
             )
         pipe = StableDiffusionXLPipeline.from_pretrained(
             self.modelo,
@@ -187,6 +200,11 @@ class GeradorSDXL:
         )
         if self.cpu_offload:
             pipe.enable_model_cpu_offload(gpu_id=self.gpu)
+        elif self.divide_gpus:
+            pipe.unet.to(f"cuda:{self.gpu}")
+            pipe.vae.to(f"cuda:{self.gpu}")
+            pipe.text_encoder.to(f"cuda:{self.gpu_texto}")
+            pipe.text_encoder_2.to(f"cuda:{self.gpu_texto}")
         else:
             pipe.to(f"cuda:{self.gpu}")
         _ativar_vae_tiling(pipe)
@@ -202,16 +220,39 @@ class GeradorSDXL:
 
         pipe = self._carregar()
         gerador = torch.Generator(device=f"cuda:{self.gpu}").manual_seed(seed)
+        comuns = {
+            "width": p.largura,
+            "height": p.altura,
+            "num_inference_steps": p.passos,
+            "guidance_scale": p.guidance_scale,
+            "generator": gerador,
+        }
+        if not self.divide_gpus:
+            resultado = pipe(
+                prompt=p.prompt,
+                prompt_2=p.prompt_2,
+                negative_prompt=p.negative_prompt,
+                negative_prompt_2=p.negative_prompt,
+                **comuns,
+            )
+            return resultado.images[0]
+        with torch.no_grad():
+            emb, emb_neg, pooled, pooled_neg = pipe.encode_prompt(
+                prompt=p.prompt,
+                prompt_2=p.prompt_2,
+                device=torch.device(f"cuda:{self.gpu_texto}"),
+                num_images_per_prompt=1,
+                do_classifier_free_guidance=True,
+                negative_prompt=p.negative_prompt,
+                negative_prompt_2=p.negative_prompt,
+            )
+        destino = torch.device(f"cuda:{self.gpu}")
         resultado = pipe(
-            prompt=p.prompt,
-            prompt_2=p.prompt_2,
-            negative_prompt=p.negative_prompt,
-            negative_prompt_2=p.negative_prompt,
-            width=p.largura,
-            height=p.altura,
-            num_inference_steps=p.passos,
-            guidance_scale=p.guidance_scale,
-            generator=gerador,
+            prompt_embeds=emb.to(destino),
+            negative_prompt_embeds=emb_neg.to(destino),
+            pooled_prompt_embeds=pooled.to(destino),
+            negative_pooled_prompt_embeds=pooled_neg.to(destino),
+            **comuns,
         )
         return resultado.images[0]
 

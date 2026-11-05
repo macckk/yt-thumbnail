@@ -434,6 +434,7 @@ def gerar(
     gerador = GeradorSDXL(
         ic.modelo,
         cfg.gpu.imagem,
+        gpu_texto=cfg.gpu.codificadores_sdxl,
         attention_slicing=ic.attention_slicing,
         cpu_offload=ic.cpu_offload,
     )

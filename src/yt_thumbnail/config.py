@@ -45,6 +45,13 @@ class Gpu(_Modelo):
 
     transcricao: int = Field(0, ge=0)
     imagem: int = Field(1, ge=0)
+    texto_sdxl: int | None = Field(None, ge=0)
+    """GPU dos codificadores de texto do SDXL; ``None`` = a GPU de transcrição."""
+
+    @property
+    def codificadores_sdxl(self) -> int:
+        """GPU efetiva dos codificadores de texto do SDXL."""
+        return self.transcricao if self.texto_sdxl is None else self.texto_sdxl
 
 
 class YtDlp(_Modelo):

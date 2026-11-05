@@ -10,7 +10,8 @@ caminhos:
 
 gpu:
   transcricao: 0               # índice da GPU para o faster-whisper
-  imagem: 1                    # índice da GPU para o SDXL
+  imagem: 1                    # índice da GPU para o SDXL (UNet + VAE)
+  texto_sdxl: null             # GPU dos codificadores de texto do SDXL (~1,6 GB); null = a de transcrição
 
 ytdlp:
   cookies_navegador: null      # ex.: firefox — só se o YouTube pedir login/bloquear o yt-dlp

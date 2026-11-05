@@ -52,7 +52,7 @@ Como escolher a cena (o mais importante):
 
 Regras para `prompt_imagem`:
 - Em **inglês**, uma descrição visual concreta da cena (assunto, ambiente, luz, enquadramento),
-  com 25 a 60 palavras, compatível com a capa {tipo}.
+  com 25 a 45 palavras (o SDXL lê no máximo ~77 tokens), compatível com a capa {tipo}.
 - **Nunca** peça texto, letras, palavras, placas, legendas ou logotipos.
 - Pessoas, se houver, de costas, em silhueta ou à distância (sem rostos e mãos em close).
 - Deixe uma área limpa e calma (céu, névoa, parede, água, fundo desfocado) do lado indicado em
