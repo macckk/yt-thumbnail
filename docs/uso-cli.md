@@ -44,6 +44,27 @@ yt-thumbnail listar --job meditacoes
 yt-thumbnail listar --job meditacoes --ids ID_DO_VIDEO --forcar
 ```
 
+### `yt-thumbnail transcrever [--job] [--ids] [--tipo longo|short] [--forcar] [--forcar-whisper] [--limite N]`
+
+Transcreve os vídeos já listados cujo tipo está em `tipos` do job:
+
+1. **legenda do YouTube** (manual tem preferência sobre a automática), nos idiomas de `transcricao.idiomas`;
+2. sem legenda, ou se o YouTube bloquear o download dela (HTTP 429): baixa só o áudio e transcreve com o **faster-whisper** na GPU `gpu.transcricao`;
+3. sem fala (ex.: Short só com música): marca `sem_fala`; a análise usará título e descrição.
+
+Grava `transcricao.txt` e `transcricao.json` e registra o status `transcrito`.
+
+| Opção | Descrição |
+|---|---|
+| `--tipo` | só `longo` ou só `short` |
+| `--forcar-whisper` | ignora a legenda e transcreve com o Whisper (útil quando a legenda automática é ruim) |
+| `--limite N` | processa no máximo N vídeos pendentes (bom para testar) |
+
+```powershell
+yt-thumbnail transcrever --job palestras --limite 3
+yt-thumbnail transcrever --ids ID_DO_VIDEO --forcar-whisper
+```
+
 ## Comandos planejados
 
-`transcrever`, `analisar`, `gerar`, `compor`, `revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).
+`analisar`, `gerar`, `compor`, `revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).

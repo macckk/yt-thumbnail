@@ -37,9 +37,13 @@ Com uma GPU só, use `0` nas duas.
 
 | Chave | Padrão | Descrição |
 |---|---|---|
-| `idiomas` | `["pt.*", "pt"]` | idiomas de legenda aceitos |
-| `modelo_whisper` | `large-v3` | modelo do faster-whisper (`large-v3`, `turbo`, ...) |
+| `idiomas` | `["pt", "pt-BR", "pt.*"]` | idiomas de legenda aceitos, em ordem de preferência (expressões regulares) |
+| `idioma_whisper` | `pt` | idioma passado ao faster-whisper |
+| `modelo_whisper` | `large-v3` | modelo do faster-whisper (`large-v3`, `turbo`, ...); baixado do Hugging Face no primeiro uso |
 | `compute_type` | `float16` | precisão na GPU |
+| `manter_audio` | `false` | `true` guarda o `audio.*` depois de transcrever (cada palestra de 40 min tem ~40 MB) |
+| `whisper_se_legenda_falhar` | `true` | se o download da legenda falhar (ex.: HTTP 429), transcreve com o Whisper em vez de registrar erro |
+| `pausa_legendas_segundos` | `1` | pausa entre downloads de legenda, para reduzir bloqueios |
 
 ## `analise`
 

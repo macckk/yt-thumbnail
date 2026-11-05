@@ -236,6 +236,37 @@ def preparar_dlls_cuda() -> None:
             os.environ["PATH"] = f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"
 
 
+TAXA_AMOSTRAGEM = 16000
+
+
+def decodificar_audio(audio: Path, ffmpeg: str | None = None) -> Any:
+    """Decodifica o áudio com o FFmpeg para mono 16 kHz ``float32`` (array do NumPy).
+
+    Evita depender da versão do PyAV usada internamente pelo faster-whisper.
+
+    Raises:
+        RuntimeError: se o FFmpeg não estiver no PATH ou falhar.
+    """
+    import shutil
+    import subprocess
+
+    import numpy as np
+
+    exe = ffmpeg or shutil.which("ffmpeg")
+    if exe is None:
+        raise RuntimeError(
+            "FFmpeg não encontrado no PATH; instale com `winget install Gyan.FFmpeg` "
+            "e reabra o terminal"
+        )
+    cmd = [exe, "-nostdin", "-v", "error", "-i", str(audio)]
+    cmd += ["-f", "s16le", "-ac", "1", "-ar", str(TAXA_AMOSTRAGEM), "-"]
+    r = subprocess.run(cmd, capture_output=True, check=False)
+    if r.returncode != 0:
+        erro = r.stderr.decode(errors="replace").strip()[-300:]
+        raise RuntimeError(f"FFmpeg não conseguiu decodificar {audio.name}: {erro}")
+    return np.frombuffer(r.stdout, np.int16).astype(np.float32) / 32768.0
+
+
 class TranscritorWhisper:
     """faster-whisper na GPU indicada; o modelo é carregado uma vez, no primeiro uso."""
 
@@ -260,8 +291,11 @@ class TranscritorWhisper:
 
     def transcrever(self, audio: Path, idioma: str) -> str:
         """Transcreve com VAD; devolve um segmento por linha."""
+        sinal = decodificar_audio(audio)
+        if sinal.size == 0:
+            return ""
         segmentos, _info = self._carregar().transcribe(
-            str(audio), language=idioma, vad_filter=True, beam_size=5
+            sinal, language=idioma, vad_filter=True, beam_size=5
         )
         return "\n".join(s.text.strip() for s in segmentos if s.text.strip())
 

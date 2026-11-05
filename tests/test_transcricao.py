@@ -266,3 +266,30 @@ def test_legenda_429_cai_no_whisper(tmp_path: Path) -> None:
         info = ler_info(pasta_video(tmp_path, "j", "v"))
         assert info is not None and "429" in (info.legenda_erro or "")
         assert estado.obter("j", "v").dados["legenda_erro"].endswith("Too Many Requests")
+
+
+def test_decodificar_audio_com_ffmpeg(tmp_path: Path) -> None:
+    import shutil
+    import subprocess
+
+    from yt_thumbnail.transcricao import decodificar_audio
+
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg is None:
+        pytest.skip("FFmpeg ausente")
+    wav = tmp_path / "tom.wav"
+    gerar = [ffmpeg, "-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=1"]
+    subprocess.run([*gerar, str(wav)], check=True)
+    sinal = decodificar_audio(wav)
+    assert sinal.dtype.name == "float32" and 15000 < sinal.size < 17000
+    assert 0.1 < float(abs(sinal).max()) <= 1.0
+
+
+def test_decodificar_audio_sem_ffmpeg(tmp_path: Path, monkeypatch) -> None:
+    import shutil
+
+    from yt_thumbnail.transcricao import decodificar_audio
+
+    monkeypatch.setattr(shutil, "which", lambda nome: None)
+    with pytest.raises(RuntimeError, match="winget"):
+        decodificar_audio(tmp_path / "x.m4a")

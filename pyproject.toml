@@ -23,6 +23,7 @@ dependencies = [
     # deno: runtime JavaScript que o yt-dlp usa para o YouTube.
     "yt-dlp[default,curl-cffi]>=2026.10.26",
     "deno>=2.0",
+    "numpy>=1.26",
     "Pillow>=10.4",
     "google-api-python-client>=2.140",
     "google-auth-oauthlib>=1.2",

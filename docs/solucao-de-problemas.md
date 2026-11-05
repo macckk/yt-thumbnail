@@ -69,6 +69,29 @@ O YouTube está bloqueando o acesso anônimo. Defina `ytdlp.cookies_navegador: f
 
 A regra é: Short = duração ≤ 180 s **e** vertical. Veja `largura`, `altura`, `duracao` e `tipo_origem` em `saida/<job>/<id>/meta.json`. `tipo_origem: url_shorts` indica que o yt-dlp não informou as dimensões e o tipo foi decidido consultando `youtube.com/shorts/<id>`. Para refazer: `yt-thumbnail listar --ids <id> --forcar`.
 
+## Transcrição
+
+### `Unable to download video subtitles ... HTTP Error 429: Too Many Requests`
+
+O YouTube limitou o download de legendas para o seu IP (comum depois de muitas consultas seguidas). Com `whisper_se_legenda_falhar: true` (padrão), a transcrição segue pelo Whisper e o motivo fica em `legenda_erro` no `transcricao.json`; o resumo do comando mostra um aviso.
+
+- O bloqueio costuma passar em algumas horas. Para refazer pela legenda depois: `yt-thumbnail transcrever --ids ID --forcar`.
+- Confirme que `curl_cffi` e `deno` estão instalados (vêm com `pip install -e .`): `python -m yt_dlp --list-impersonate-targets` deve listar alvos `curl_cffi`.
+- Se persistir, use cookies do navegador (`ytdlp.cookies_navegador`).
+
+### Whisper: `cublas64_12.dll` / `cudnn_ops64_9.dll` não encontrada
+
+Veja [CUDA e cuDNN](#cuda-e-cudnn). O yt-thumbnail já procura as DLLs dos pacotes `nvidia-cublas-cu12` e `nvidia-cudnn-cu12` instalados no venv.
+
+### Whisper lento ou sem memória
+
+- O `large-v3` usa ~3 GB de VRAM em `float16` e leva alguns minutos por hora de áudio numa RTX 3060 Ti. O modelo `turbo` é bem mais rápido, com qualidade um pouco menor: `modelo_whisper: turbo`.
+- A primeira execução baixa o modelo (~3 GB) para o cache do Hugging Face (`HF_HOME`).
+
+### Transcrição saiu como `sem_fala`
+
+Não havia legenda e o Whisper não encontrou fala (menos de 20 letras). Normal em Shorts só com música; a análise usará título e descrição. Se houver fala, tente `--forcar-whisper`.
+
 ## Configuração
 
 ### `Arquivo de configuração config.yaml não encontrado`
