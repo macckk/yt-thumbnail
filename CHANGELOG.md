@@ -4,7 +4,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
-### Fase 2 — Transcrição
+### Fase 2 — Transcrição ✅ (concluída em 2026-11-05)
 - `transcricao.py`: legenda do YouTube via yt-dlp (manual > automática), limpeza de VTT (timestamps, tags, linhas repetidas, `[Música]`), fallback com áudio + faster-whisper na GPU de transcrição, `sem_fala` para vídeos sem fala.
 - Se o YouTube bloquear a legenda (HTTP 429), a transcrição segue pelo Whisper e registra `legenda_erro`.
 - yt-dlp com `curl-cffi` (impersonation, exigida pelo YouTube para legendas) e `deno` (runtime JavaScript).
@@ -12,6 +12,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - Comando `yt-thumbnail transcrever [--job] [--ids] [--tipo] [--forcar] [--forcar-whisper] [--limite]`.
 - Novas chaves em `transcricao`: `idioma_whisper`, `manter_audio`, `whisper_se_legenda_falhar`, `pausa_legendas_segundos`; `idiomas` padrão agora `["pt", "pt-BR", "pt.*"]`.
 - Logger do yt-dlp silenciado (erros chegam pelas exceções, sem poluir o terminal).
+- Áudio decodificado pelo FFmpeg antes do Whisper (o faster-whisper 1.2.1 é incompatível com o PyAV 19).
+- Validado no PC das GPUs: palestra de 38 min pelo Whisper large-v3 na GPU 0 (legenda bloqueada por HTTP 429 → fallback; 5.394 palavras em ~6,5 min com download e carga do modelo) e 2 Shorts pela legenda automática (20 s). O caso `sem_fala` está coberto por teste automatizado.
 
 ### Fase 1 — Listagem da playlist e detecção de tipo ✅ (concluída em 2026-11-05)
 - `estado.py`: estado por vídeo em SQLite (`saida/estado.db`), status só avança, erros com contagem de tentativas.

@@ -244,7 +244,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/configuracao.md` (jobs, canais, tipos), `docs/uso-cli.md`.
 **Aceite:** todos os vídeos aparecem com o tipo correto (testar com playlist que tenha longos e Shorts); rodar duas vezes não duplica.
 
-### Fase 2 — Transcrição
+### Fase 2 — Transcrição ✅ concluída (2026-11-05)
 **Tarefas**
 - Legenda: `yt-dlp --write-subs --write-auto-subs --sub-langs "pt.*,pt" --skip-download --sub-format vtt`; preferir manual; limpar VTT (timestamps e linhas repetidas da legenda automática).
 - Fallback: baixar só o áudio (`-f bestaudio`) e transcrever com `faster-whisper` (`device="cuda"`, `device_index=0`, `compute_type="float16"`, `language="pt"`, modelo `large-v3` ou `turbo`, `vad_filter=True`).
