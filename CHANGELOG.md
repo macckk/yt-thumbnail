@@ -11,7 +11,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - Comando `yt-thumbnail analisar [--job] [--ids] [--tipo] [--forcar] [--limite]`.
 - Novas chaves em `analise`: `modelo`, `timeout_segundos`, `saida_estruturada`, `template`.
 - Template pede cenas tiradas do conteúdo de cada vídeo (objetos, metáforas, histórias citadas), variedade de enquadramento/ambiente/luz e figura humana só quando essencial; títulos com maiúscula só no início. Preset `espiritualidade` com repertório visual mais amplo.
-- Validado no PC das GPUs com 6 vídeos reais (4 palestras + 2 Shorts): todas as respostas válidas na 1ª tentativa (~10 s por vídeo); títulos revisados e aprovados quanto ao tom do preset.
+- Validado no PC das GPUs com 6 vídeos reais (4 palestras + 2 Shorts): todas as respostas válidas na 1ª tentativa (~10 s por vídeo); títulos revisados quanto ao tom do preset; cenas ajustadas para mais variedade a pedido do autor.
 
 ### Fase 2 — Transcrição ✅ (concluída em 2026-11-05)
 - `transcricao.py`: legenda do YouTube via yt-dlp (manual > automática), limpeza de VTT (timestamps, tags, linhas repetidas, `[Música]`), fallback com áudio + faster-whisper na GPU de transcrição, `sem_fala` para vídeos sem fala.
