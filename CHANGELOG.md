@@ -4,6 +4,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Fase 4 — Geração da imagem (SDXL)
+- `imagem.py`: SDXL 1.0 base fp16 na GPU de imagem, carregado uma vez por execução, VAE tiling; `attention_slicing` e `cpu_offload` opcionais.
+- Prompt dividido entre os dois codificadores do SDXL (cena no 1º; estilo do preset + cena no 2º) para não cortar nada no limite de 77 tokens.
+- Variações com seeds aleatórias salvas em `imagens.json` e no estado; ajuste por escala + recorte central para a saída (1280×720 / 1080×1920).
+- Comando `yt-thumbnail gerar [--job] [--ids] [--tipo] [--variacoes] [--forcar] [--limite]`.
+- Novas chaves `imagem.attention_slicing` e `imagem.cpu_offload`.
+
 ### Fase 3 — Análise e prompt (Claude) ✅ (concluída em 2026-11-05)
 - `analise/base.py`: interface `BackendAnalise`, montagem do prompt (template + preset + tipo), transcrição longa reduzida a início/meio/fim, extração e validação do JSON (esquema + tamanho do título do preset) com novas tentativas explicando o erro.
 - `analise/claude_code.py`: backend padrão com `claude -p --output-format json`, saída estruturada (`--json-schema`), sem ferramentas e sem gravar sessão; mensagens acionáveis para falta de login (inclusive por SSH).

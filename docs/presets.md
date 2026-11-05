@@ -46,4 +46,25 @@ O template pede que a cena venha **do conteúdo do vídeo** (um objeto, uma met�
 
 `prompts/analise.md` é texto livre em Markdown. Os marcadores entre chaves são substituídos: `{tipo}`, `{titulo}`, `{descricao}`, `{transcricao}`, `{preset}`, `{tom}`, `{titulo_min}`, `{titulo_max}`, `{proibido}`, `{diretrizes_imagem}`, `{simbolos}`. Outras chaves (como o exemplo de JSON) ficam como estão. Mantenha o formato de resposta: os campos do JSON são validados. Para usar outro arquivo, defina `analise.template`.
 
-Os detalhes das camadas de imagem e tipografia serão documentados nas fases 4 e 5.
+## Camada de imagem
+
+Usada por `yt-thumbnail gerar` (SDXL).
+
+| Chave | Efeito |
+|---|---|
+| `imagem.estilo_sufixo` | estilo comum a todas as capas do preset (luz, paleta, clima) |
+| `imagem.negative_prompt` | o que evitar (texto, letras, logotipos, escuridão, mãos deformadas...) |
+| `imagem.guidance_scale` | quanto o SDXL segue o prompt (5–7 costuma ser bom; alto demais satura) |
+| `imagem.passos` | passos de difusão (30 é um bom equilíbrio; mais = mais lento) |
+| `imagem.paleta` | referência de cores do preset (usada na composição e como guia ao escrever o estilo) |
+
+**Como o prompt é montado.** O SDXL tem dois codificadores de texto, cada um lê no máximo 77 tokens (~50–60 palavras). Para nada importante ser cortado:
+
+- 1º codificador: só a cena (`prompt_imagem` da análise);
+- 2º codificador (o maior, que mais pesa no estilo): `estilo_sufixo`, depois a cena.
+
+O `negative_prompt` vai para os dois. Mantenha o `estilo_sufixo` curto (até ~25 palavras).
+
+**Requisitos.** SDXL fp16 com VAE tiling cabe numa GPU de 8 GB em 1344×768. Se aparecer "CUDA out of memory", ligue `imagem.attention_slicing`; como último recurso, `imagem.cpu_offload`.
+
+Os detalhes da camada de tipografia serão documentados na fase 5.

@@ -131,6 +131,25 @@ def ler_imagens(pasta: Path, variacoes: int) -> ArquivoImagens | None:
 # --------------------------------------------------------------------------- SDXL
 
 
+def _ativar_vae_tiling(pipe: Any) -> None:
+    """VAE em blocos (menos VRAM na decodificação); a API mudou entre versões do diffusers."""
+    vae = getattr(pipe, "vae", None)
+    if vae is not None and hasattr(vae, "enable_tiling"):
+        vae.enable_tiling()
+    elif hasattr(pipe, "enable_vae_tiling"):
+        pipe.enable_vae_tiling()
+
+
+def _ativar_attention_slicing(pipe: Any) -> None:
+    """Atenção fatiada (menos VRAM); usa a API disponível na versão do diffusers."""
+    if hasattr(pipe, "enable_attention_slicing"):
+        pipe.enable_attention_slicing()
+        return
+    unet = getattr(pipe, "unet", None)
+    if unet is not None and hasattr(unet, "set_attention_slice"):
+        unet.set_attention_slice("auto")
+
+
 class GeradorSDXL:
     """Pipeline SDXL (``diffusers``) em fp16 numa GPU; carregado uma vez, no primeiro uso."""
 
@@ -170,9 +189,9 @@ class GeradorSDXL:
             pipe.enable_model_cpu_offload(gpu_id=self.gpu)
         else:
             pipe.to(f"cuda:{self.gpu}")
-        pipe.enable_vae_tiling()
+        _ativar_vae_tiling(pipe)
         if self.attention_slicing:
-            pipe.enable_attention_slicing()
+            _ativar_attention_slicing(pipe)
         pipe.set_progress_bar_config(disable=True)
         self._pipe = pipe
         return pipe

@@ -110,6 +110,20 @@ Sua versão do Claude Code é antiga: atualize (`claude update`) ou defina `anal
 
 Aumente `analise.timeout_segundos` ou use um modelo mais rápido em `analise.modelo` (ex.: `sonnet`).
 
+## Geração de imagem (SDXL)
+
+### `CUDA out of memory`
+
+Feche outros programas que usem a GPU de imagem (`nvidia-smi` mostra) e ligue `imagem.attention_slicing: true`. Se persistir, `imagem.cpu_offload: true` (bem mais lento). Confira se `gpu.imagem` aponta para a GPU livre (a de transcrição pode estar ocupada pelo Whisper).
+
+### Primeira execução demorada
+
+O SDXL (~7 GB, variante fp16) é baixado do Hugging Face para o cache (`HF_HOME`). Depois disso, a carga leva ~1 min por execução. Com pouca RAM (8 GB), a carga usa o arquivo de paginação: deixe o tamanho da paginação do Windows como "gerenciado pelo sistema".
+
+### As imagens têm letras ou rabiscos parecidos com texto
+
+O SDXL às vezes desenha "pseudo-texto". O `negative_prompt` do preset já inclui `text, letters, words`; gere outras variações (`--forcar`) ou deixe o template de análise insistir em áreas lisas (céu, parede, névoa) do lado do título.
+
 ## Configuração
 
 ### `Arquivo de configuração config.yaml não encontrado`

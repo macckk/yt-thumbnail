@@ -41,6 +41,7 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `transcricao.py` | Fase 2: legenda do YouTube e faster-whisper |
 | `analise/base.py` | Fase 3: interface dos backends, prompt, validação e novas tentativas |
 | `analise/claude_code.py` | Fase 3: backend padrão (`claude -p`) |
+| `imagem.py` | Fase 4: SDXL, variações e ajuste para a saída |
 | `ambiente.py` | verificação do ambiente |
 | `cli.py` | comandos (Typer) |
 
@@ -132,5 +133,34 @@ Implemente `BackendAnalise` (atributo `nome` e método `gerar(prompt, esquema) -
   "backend": "claude_code",
   "tentativas": 1,
   "analisado_em": "2026-11-05T22:00:00+00:00"
+}
+```
+
+## Fase 4 — Geração da imagem
+
+1. **Parâmetros** (`imagem.montar_parametros`): `prompt` = cena da análise; `prompt_2` = `estilo_sufixo` + cena; `negative_prompt` do preset nos dois codificadores; `guidance_scale` e `passos` do preset; resolução nativa do tipo (`formatos.<tipo>.geracao`).
+2. **Pipeline** (`GeradorSDXL`): `StableDiffusionXLPipeline` fp16 (`variant="fp16"`, `low_cpu_mem_usage`) em `cuda:<gpu.imagem>`, com `enable_vae_tiling()`; `attention_slicing` e `cpu_offload` opcionais. Carregado uma vez por execução, no primeiro vídeo.
+3. **Variações**: uma seed aleatória por variação (`torch.Generator` na GPU), salvas em `imagens.json` e no estado.
+4. **Ajuste** (`ajustar`): escala para cobrir a saída (`formatos.<tipo>.saida`) e recorte central — 1344×768 → 1280×720; 768×1344 → 1080×1920.
+
+Falhas (inclusive falta de VRAM) ficam no estado do vídeo e o lote continua.
+
+### `imagens.json`
+
+```json
+{
+  "modelo": "stabilityai/stable-diffusion-xl-base-1.0",
+  "prompt": "An old rustic wooden farm gate ...",
+  "prompt_2": "soft natural light, serene, ..., An old rustic wooden farm gate ...",
+  "negative_prompt": "text, letters, words, ...",
+  "largura": 1344,
+  "altura": 768,
+  "passos": 30,
+  "guidance_scale": 6.0,
+  "seeds": [123456, 789012, 345678],
+  "arquivos": ["base_1.png", "base_2.png", "base_3.png"],
+  "saida": [1280, 720],
+  "segundos": 95.2,
+  "gerado_em": "2026-11-05T23:00:00+00:00"
 }
 ```

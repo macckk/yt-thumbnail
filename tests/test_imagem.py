@@ -152,3 +152,41 @@ def test_erro_de_memoria_nao_derruba_lote(tmp_path: Path, preset) -> None:
         assert list(r.feitos) == ["b"]
         assert "attention_slicing" in r.erros["a"]
         assert estado.obter("j", "a").erro == "gerar"
+
+
+def test_compatibilidade_vae_tiling() -> None:
+    from yt_thumbnail.imagem import _ativar_attention_slicing, _ativar_vae_tiling
+
+    class Vae:
+        ativo = False
+
+        def enable_tiling(self) -> None:
+            self.ativo = True
+
+    class PipeNovo:  # diffusers >= 0.4x: só pipe.vae.enable_tiling
+        vae = Vae()
+
+    class PipeAntigo:
+        vae = None
+        chamado = False
+
+        def enable_vae_tiling(self) -> None:
+            self.chamado = True
+
+    novo, antigo = PipeNovo(), PipeAntigo()
+    _ativar_vae_tiling(novo)
+    _ativar_vae_tiling(antigo)
+    assert novo.vae.ativo and antigo.chamado
+
+    class Unet:
+        fatia = None
+
+        def set_attention_slice(self, v: str) -> None:
+            self.fatia = v
+
+    class SoUnet:
+        unet = Unet()
+
+    p = SoUnet()
+    _ativar_attention_slicing(p)
+    assert p.unet.fatia == "auto"

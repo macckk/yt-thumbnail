@@ -77,6 +77,18 @@ yt-thumbnail analisar --job palestras --limite 5
 yt-thumbnail analisar --ids ID_DO_VIDEO --forcar
 ```
 
+### `yt-thumbnail gerar [--job] [--ids] [--tipo] [--variacoes N] [--forcar] [--limite N]`
+
+Gera as imagens de fundo, **sem texto**, com o SDXL na GPU `gpu.imagem`, para os vídeos já analisados. Cada vídeo recebe `--variacoes` imagens (padrão `imagem.variacoes`, 3) com seeds diferentes, geradas na resolução nativa do tipo (1344×768 longo, 768×1344 Short) e ajustadas para a saída (1280×720 / 1080×1920). Grava `base_1..N.png` e `imagens.json` (seeds e parâmetros) e registra `imagens_geradas`.
+
+- O modelo é carregado uma vez por execução (~1 min); a primeira execução baixa o SDXL (~7 GB) do Hugging Face.
+- `--forcar` gera de novo com seeds novas.
+
+```powershell
+yt-thumbnail gerar --job palestras --limite 2
+yt-thumbnail gerar --ids ID_DO_VIDEO --forcar --variacoes 4
+```
+
 ## Comandos planejados
 
-`gerar`, `compor`, `revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).
+`compor`, `revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).

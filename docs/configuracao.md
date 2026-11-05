@@ -61,8 +61,10 @@ Com uma GPU só, use `0` nas duas.
 
 | Chave | Padrão | Descrição |
 |---|---|---|
-| `modelo` | `stabilityai/stable-diffusion-xl-base-1.0` | modelo do Hugging Face |
+| `modelo` | `stabilityai/stable-diffusion-xl-base-1.0` | modelo do Hugging Face (variante fp16) |
 | `variacoes` | `3` | variações por vídeo |
+| `attention_slicing` | `false` | reduz o pico de VRAM, um pouco mais lento |
+| `cpu_offload` | `false` | mantém partes do modelo na RAM e move para a GPU sob demanda; bem mais lento e usa mais RAM — último recurso |
 
 ## `formatos`
 
