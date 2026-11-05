@@ -222,7 +222,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 
 ## 9. Fases
 
-### Fase 0 — Ambiente, esqueleto e verificação
+### Fase 0 — Ambiente, esqueleto e verificação ✅ concluída (2026-11-05)
 **Tarefas**
 - `pyproject.toml` (nome `yt-thumbnail`, `license = "GPL-3.0-or-later"`, entry point `yt-thumbnail = yt_thumbnail.cli:app`), venv, estrutura de pastas, `.gitignore`, `LICENSE` (GPL v3), `README.md` inicial, `config.example.yaml`, `.env.example`.
 - Dependências: PyTorch com CUDA (index-url oficial cu12x), `diffusers`, `transformers`, `accelerate`, `faster-whisper`, `yt-dlp`, `Pillow`, `google-api-python-client`, `google-auth-oauthlib`, `pydantic`, `pyyaml`, `typer`, `rich`; dev: `pytest`, `ruff`.
@@ -399,4 +399,6 @@ No início de cada sessão: pedir ao Claude Code para ler este `PLANO.md`, o `CH
 - [x] Símbolos religiosos: sempre neutros
 - [x] Programa de Parcerias: nenhum canal está → sem envio de capa de Short por enquanto
 
-Nenhum ponto em aberto no momento.
+- [ ] Execução: o projeto roda em **outro PC** da rede (2× RTX 3060 Ti 8 GB, acesso `ssh pc-gpu`); o desenvolvimento é feito em outro PC e sincronizado pelo GitHub
+- [ ] RAM do PC das GPUs é **8 GB**: carregar SDXL (~7 GB) e Whisper (~3 GB) juntos pode estourar a memória → na Fase 8, permitir rodar as etapas em sequência (paralelismo configurável) ou aumentar a RAM para 16–32 GB
+- [ ] `claude -p` por SSH precisa de `CLAUDE_CODE_OAUTH_TOKEN` (ver `docs/solucao-de-problemas.md`)

@@ -57,7 +57,25 @@ Alternativa: baixar as DLLs do pacote do Purfview (<https://github.com/Purfview/
 
 ## 6. Claude Code
 
-Instale o Claude Code (<https://claude.com/claude-code>), rode `claude` uma vez para fazer login e confira com `claude --version`.
+Instale o Claude Code (<https://claude.com/claude-code>):
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+Se depois disso `claude` não for reconhecido, adicione a pasta ao `PATH` do usuário e reabra o terminal:
+
+```powershell
+[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.localin", 'User')
+```
+
+Rode `claude` uma vez para fazer login e teste o modo headless usado pela análise:
+
+```powershell
+claude -p "diga ok"
+```
+
+Se o pipeline for rodar **por SSH** (ver abaixo), configure também um token de longa duração (ver [solucao-de-problemas.md](solucao-de-problemas.md#claude--p-responde-not-logged-in-por-ssh)).
 
 ## 7. Fontes
 
@@ -88,6 +106,31 @@ yt-thumbnail ambiente
 ```
 
 Todos os itens devem aparecer como **OK** (2 GPUs, CUDA, FFmpeg, yt-dlp, Claude Code e fontes). O mesmo teste existe como script: `python scripts/check_env.py`.
+
+## Desenvolver num PC e executar em outro
+
+Um arranjo comum: o código é editado num PC sem GPU e executado no PC com as GPUs, na mesma rede.
+
+1. No PC das GPUs (PowerShell como Administrador), ative o servidor SSH:
+   ```powershell
+   Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+   Start-Service sshd; Set-Service sshd -StartupType Automatic
+   ```
+2. No PC de desenvolvimento, gere uma chave (`ssh-keygen -t ed25519`) e crie um atalho em `~/.ssh/config`:
+   ```
+   Host pc-gpu
+       HostName 192.168.x.x
+       User SEU_USUARIO
+       IdentityFile ~/.ssh/id_ed25519
+   ```
+3. No PC das GPUs, cadastre a chave pública. Para usuários **administradores** o Windows lê só `C:\ProgramData\sshdministrators_authorized_keys`, que precisa de permissão restrita:
+   ```powershell
+   Add-Content C:\ProgramData\sshdministrators_authorized_keys 'ssh-ed25519 AAAA... comentario' -Encoding ascii
+   icacls C:\ProgramData\sshdministrators_authorized_keys /inheritance:r /grant '*S-1-5-32-544:F' /grant 'SYSTEM:F'
+   ```
+4. O código vai de um PC para o outro pelo GitHub (`git push` aqui, `git pull` lá). O shell padrão do SSH no Windows é o `cmd`; para PowerShell use `ssh pc-gpu "powershell -NoProfile -Command ..."`.
+
+Depois de mudar variáveis de ambiente no PC das GPUs, rode `Restart-Service sshd` para as sessões SSH novas enxergarem a mudança.
 
 ## Linux
 

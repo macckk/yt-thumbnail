@@ -41,6 +41,19 @@ Instale o Claude Code e confira com `claude --version` num terminal novo.
 
 `python scripts/baixar_fontes.py` (com `pip install fonttools` para fixar o peso Light).
 
+### `claude -p` responde "Not logged in" por SSH
+
+No terminal local o `claude -p "diga ok"` funciona, mas pelo SSH responde `Not logged in · Please run /login`. Em sessões SSH autenticadas por chave, o Windows não libera as credenciais protegidas do usuário, então o login normal do Claude Code não é lido.
+
+Solução: gerar um token de longa duração e guardá-lo numa variável de ambiente do usuário (no PC das GPUs, terminal local):
+
+```powershell
+claude setup-token
+[Environment]::SetEnvironmentVariable('CLAUDE_CODE_OAUTH_TOKEN', 'TOKEN_GERADO', 'User')
+```
+
+Depois, como Administrador, `Restart-Service sshd`. O token é um segredo: não o coloque em `config.yaml`, `.env` versionado nem em commits.
+
 ## Configuração
 
 ### `Arquivo de configuração config.yaml não encontrado`
