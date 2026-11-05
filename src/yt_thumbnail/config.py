@@ -62,6 +62,7 @@ class Transcricao(_Modelo):
     modelo_whisper: str = "large-v3"
     compute_type: str = "float16"
     manter_audio: bool = False
+    whisper_se_legenda_falhar: bool = True
     pausa_legendas_segundos: float = Field(1.0, ge=0)
 
 

@@ -215,6 +215,7 @@ def test_filtro_tipo_limite_e_erro(tmp_path: Path) -> None:
             transcritor=FakeWhisper({}),
             idiomas=["pt"],
             limite=1,
+            whisper_se_legenda_falhar=False,
             extrair=quebra,
             baixar=fake_baixar,
         )
@@ -238,3 +239,30 @@ def test_meta_ausente(tmp_path: Path) -> None:
             baixar=fake_baixar,
         )
         assert "listar" in r.erros["z"]
+
+
+def test_legenda_429_cai_no_whisper(tmp_path: Path) -> None:
+    def bloqueado(url: str, opcoes: dict) -> dict:
+        if opcoes.get("_baixar_legenda"):
+            raise RuntimeError("HTTP Error 429: Too Many Requests")
+        return {"automatic_captions": {"pt": [{}]}}
+
+    whisper = FakeWhisper({"v": "Hoje vamos refletir sobre a caridade e o amor."})
+    kw = dict(
+        job="j",
+        tipos=["longo"],
+        pasta_saida=tmp_path,
+        transcritor=whisper,
+        idiomas=["pt"],
+        extrair=bloqueado,
+        baixar=fake_baixar,
+    )
+    with abrir_estado(tmp_path) as estado:
+        _preparar(tmp_path, estado, {"v": "longo"})
+        r = transcrever_job(**kw, estado=estado, whisper_se_legenda_falhar=False)
+        assert "429" in r.erros["v"] and not whisper.chamadas
+        r = transcrever_job(**kw, estado=estado)
+        assert r.feitos == {"v": "whisper"} and "429" in r.legenda_falhou["v"]
+        info = ler_info(pasta_video(tmp_path, "j", "v"))
+        assert info is not None and "429" in (info.legenda_erro or "")
+        assert estado.obter("j", "v").dados["legenda_erro"].endswith("Too Many Requests")

@@ -73,6 +73,15 @@ class ResultadoListagem:
 # --------------------------------------------------------------------------- yt-dlp
 
 
+class _LoggerSilencioso:
+    """Logger do yt-dlp que descarta tudo (os erros chegam pelas exceções)."""
+
+    def debug(self, msg: str) -> None:
+        """Descarta."""
+
+    info = warning = error = debug
+
+
 def opcoes_ytdlp(cookies_navegador: str | None = None) -> dict[str, Any]:
     """Opções base do yt-dlp (silencioso, sem download)."""
     opcoes: dict[str, Any] = {
@@ -80,6 +89,7 @@ def opcoes_ytdlp(cookies_navegador: str | None = None) -> dict[str, Any]:
         "no_warnings": True,
         "skip_download": True,
         "noprogress": True,
+        "logger": _LoggerSilencioso(),
     }
     if cookies_navegador:
         opcoes["cookiesfrombrowser"] = (cookies_navegador,)

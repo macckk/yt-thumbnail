@@ -288,6 +288,7 @@ def transcrever(
                     ids=_ids(ids),
                     forcar=forcar,
                     forcar_whisper=forcar_whisper,
+                    whisper_se_legenda_falhar=tc.whisper_se_legenda_falhar,
                     manter_audio=tc.manter_audio,
                     limite=limite,
                     ao_progredir=progresso,
@@ -298,9 +299,15 @@ def transcrever(
                 f"[bold]{j.nome}[/]: {len(r.feitos)} transcrito(s) ({detalhe}); "
                 f"{len(r.existentes)} já transcrito(s); {len(r.erros)} erro(s)."
             )
+            if r.legenda_falhou:
+                console.print(
+                    f"  [yellow]Aviso:[/] a legenda de {len(r.legenda_falhou)} vídeo(s) não pôde "
+                    "ser baixada e foi usado o Whisper (ex.: "
+                    f"{escape(next(iter(r.legenda_falhou.values())))})."
+                )
             for vid, msg in r.erros.items():
                 console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
-            if r.erros:
+            if r.erros or r.legenda_falhou:
                 console.print(f"  Dicas: {DOCS_PROBLEMAS}#transcrição")
             falhou = falhou or bool(r.erros)
     if falhou:

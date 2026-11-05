@@ -45,6 +45,8 @@ class InfoTranscricao(BaseModel):
     caracteres: int
     palavras: int
     modelo: str | None = None
+    legenda_erro: str | None = None
+    """Motivo de a legenda não ter sido usada (ex.: HTTP 429), quando caiu no Whisper."""
     transcrito_em: str
 
 
@@ -74,6 +76,7 @@ class ResultadoTranscricao:
     feitos: dict[str, Origem] = field(default_factory=dict)
     existentes: list[str] = field(default_factory=list)
     erros: dict[str, str] = field(default_factory=dict)
+    legenda_falhou: dict[str, str] = field(default_factory=dict)
 
 
 # --------------------------------------------------------------------------- VTT
@@ -278,7 +281,12 @@ def ler_info(pasta: Path) -> InfoTranscricao | None:
 
 
 def gravar_transcricao(
-    pasta: Path, texto: str, origem: Origem, idioma: str | None, modelo: str | None = None
+    pasta: Path,
+    texto: str,
+    origem: Origem,
+    idioma: str | None,
+    modelo: str | None = None,
+    legenda_erro: str | None = None,
 ) -> InfoTranscricao:
     """Grava ``transcricao.txt`` e ``transcricao.json``."""
     pasta.mkdir(parents=True, exist_ok=True)
@@ -289,6 +297,7 @@ def gravar_transcricao(
         caracteres=len(texto),
         palavras=len(texto.split()),
         modelo=modelo,
+        legenda_erro=legenda_erro,
         transcrito_em=datetime.now(UTC).isoformat(timespec="seconds"),
     )
     (pasta / "transcricao.json").write_text(
@@ -309,15 +318,26 @@ def transcrever_video(
     transcritor: Transcritor,
     opcoes: dict[str, Any],
     forcar_whisper: bool = False,
+    whisper_se_legenda_falhar: bool = True,
     manter_audio: bool = False,
     extrair: Extrator | None = None,
     baixar: Callable[[str, Path, dict[str, Any]], Path] | None = None,
 ) -> InfoTranscricao:
-    """Transcreve um vídeo (legenda → whisper → sem_fala) e grava os artefatos."""
+    """Transcreve um vídeo (legenda → whisper → sem_fala) e grava os artefatos.
+
+    Se o download da legenda falhar (ex.: HTTP 429) e ``whisper_se_legenda_falhar``, segue
+    pelo Whisper e registra o motivo em ``legenda_erro``; senão, propaga o erro.
+    """
     extrair = extrair or extrair_ytdlp_legenda
     baixar = baixar or baixar_audio
+    legenda_erro: str | None = None
     if not forcar_whisper:
-        legenda = obter_legenda(video_id, pasta, idiomas, extrair, opcoes)
+        try:
+            legenda = obter_legenda(video_id, pasta, idiomas, extrair, opcoes)
+        except Exception as e:
+            if not whisper_se_legenda_falhar:
+                raise
+            legenda, legenda_erro = None, (str(e).strip() or e.__class__.__name__)
         if legenda is not None:
             return gravar_transcricao(pasta, legenda.texto, legenda.origem, legenda.idioma)
     audio = baixar(video_id, pasta, opcoes)
@@ -327,8 +347,10 @@ def transcrever_video(
         if not manter_audio:
             audio.unlink(missing_ok=True)
     if tem_fala(texto):
-        return gravar_transcricao(pasta, texto, "whisper", idioma_whisper, transcritor.modelo)
-    return gravar_transcricao(pasta, "", "sem_fala", None, transcritor.modelo)
+        return gravar_transcricao(
+            pasta, texto, "whisper", idioma_whisper, transcritor.modelo, legenda_erro
+        )
+    return gravar_transcricao(pasta, "", "sem_fala", None, transcritor.modelo, legenda_erro)
 
 
 def transcrever_job(
@@ -344,6 +366,7 @@ def transcrever_job(
     ids: Iterable[str] | None = None,
     forcar: bool = False,
     forcar_whisper: bool = False,
+    whisper_se_legenda_falhar: bool = True,
     manter_audio: bool = False,
     limite: int | None = None,
     extrair: Extrator | None = None,
@@ -394,6 +417,7 @@ def transcrever_job(
                 transcritor=transcritor,
                 opcoes=opcoes,
                 forcar_whisper=forcar_whisper,
+                whisper_se_legenda_falhar=whisper_se_legenda_falhar,
                 manter_audio=manter_audio,
                 extrair=extrair,
                 baixar=baixar,
@@ -407,8 +431,10 @@ def transcrever_job(
             job,
             r.video_id,
             "transcrito",
-            dados={"transcricao_origem": info.origem},
+            dados={"transcricao_origem": info.origem, "legenda_erro": info.legenda_erro},
             permitir_regredir=forcar or forcar_whisper,
         )
         resultado.feitos[r.video_id] = info.origem
+        if info.legenda_erro:
+            resultado.legenda_falhou[r.video_id] = info.legenda_erro
     return resultado
