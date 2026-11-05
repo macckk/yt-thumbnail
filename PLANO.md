@@ -255,7 +255,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** seção de transcrição em `docs/arquitetura.md`; problemas comuns (CUDA/cuDNN) em `solucao-de-problemas.md`.
 **Aceite:** `transcricao.txt` para todos; vídeo sem legenda transcrito na GPU 0; Short sem fala tratado.
 
-### Fase 3 — Análise e prompt (Claude)
+### Fase 3 — Análise e prompt (Claude) ✅ concluída (2026-11-05)
 **Tarefas**
 - Interface `analise/base.py` (entrada: meta + transcrição + preset; saída: `analise.json`). Implementar só `claude_code.py` agora; a interface permite backends futuros (API da Anthropic, Ollama) para quem for usar o projeto sem Claude Code.
 - Template `prompts/analise.md` + bloco de tom vindo do preset; informar o **tipo** (longo/short) para o Claude escolher composição vertical ou horizontal.

@@ -15,6 +15,7 @@ Leia os dados do vídeo e a transcrição, entenda a mensagem central e proponha
 - Tom do título: {tom}
 - Título da capa: entre {titulo_min} e {titulo_max} palavras, em português, curto e legível em tamanho pequeno.
   Não repita o título original inteiro; destaque a ideia central ou o benefício para quem assiste.
+  Use maiúscula só no início da frase e em nomes próprios (ex.: "Todos somos chamados").
 - Proibido: {proibido}
 - Diretrizes de imagem: {diretrizes_imagem}
 - Símbolos religiosos: {simbolos} (com "neutro", não use cruzes, imagens de santos, Jesus, anjos

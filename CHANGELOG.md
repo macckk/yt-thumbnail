@@ -4,12 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
-### Fase 3 — Análise e prompt (Claude)
+### Fase 3 — Análise e prompt (Claude) ✅ (concluída em 2026-11-05)
 - `analise/base.py`: interface `BackendAnalise`, montagem do prompt (template + preset + tipo), transcrição longa reduzida a início/meio/fim, extração e validação do JSON (esquema + tamanho do título do preset) com novas tentativas explicando o erro.
 - `analise/claude_code.py`: backend padrão com `claude -p --output-format json`, saída estruturada (`--json-schema`), sem ferramentas e sem gravar sessão; mensagens acionáveis para falta de login (inclusive por SSH).
 - Template `prompts/analise.md` reescrito (regras de prompt de imagem, símbolos neutros, área para o título, Shorts no terço central).
 - Comando `yt-thumbnail analisar [--job] [--ids] [--tipo] [--forcar] [--limite]`.
 - Novas chaves em `analise`: `modelo`, `timeout_segundos`, `saida_estruturada`, `template`.
+- Template pede cenas tiradas do conteúdo de cada vídeo (objetos, metáforas, histórias citadas), variedade de enquadramento/ambiente/luz e figura humana só quando essencial; títulos com maiúscula só no início. Preset `espiritualidade` com repertório visual mais amplo.
+- Validado no PC das GPUs com 6 vídeos reais (4 palestras + 2 Shorts): todas as respostas válidas na 1ª tentativa (~10 s por vídeo); títulos revisados e aprovados quanto ao tom do preset.
 
 ### Fase 2 — Transcrição ✅ (concluída em 2026-11-05)
 - `transcricao.py`: legenda do YouTube via yt-dlp (manual > automática), limpeza de VTT (timestamps, tags, linhas repetidas, `[Música]`), fallback com áudio + faster-whisper na GPU de transcrição, `sem_fala` para vídeos sem fala.

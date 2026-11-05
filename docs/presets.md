@@ -38,6 +38,10 @@ Usada por `yt-thumbnail analisar`. O prompt é o template `prompts/analise.md` c
 
 O `estilo_sufixo` e o `negative_prompt` **não** vão para o Claude: são somados ao `prompt_imagem` pelo programa na geração da imagem (Fase 4).
 
+### Variedade das cenas
+
+O template pede que a cena venha **do conteúdo do vídeo** (um objeto, uma metáfora, uma história citada) e não de uma paisagem genérica, e que figura humana apareça só quando for essencial. Sem isso, as diretrizes do preset tendem a produzir sempre "pessoa de costas no campo ao amanhecer". Para mudar o repertório visual de um preset, edite `analise.diretrizes_imagem`.
+
 ### Editar o template
 
 `prompts/analise.md` é texto livre em Markdown. Os marcadores entre chaves são substituídos: `{tipo}`, `{titulo}`, `{descricao}`, `{transcricao}`, `{preset}`, `{tom}`, `{titulo_min}`, `{titulo_max}`, `{proibido}`, `{diretrizes_imagem}`, `{simbolos}`. Outras chaves (como o exemplo de JSON) ficam como estão. Mantenha o formato de resposta: os campos do JSON são validados. Para usar outro arquivo, defina `analise.template`.
