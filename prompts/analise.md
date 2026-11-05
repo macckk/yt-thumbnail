@@ -37,11 +37,24 @@ Responda **apenas** com um objeto JSON válido, sem texto antes ou depois, neste
 }
 ```
 
+Como escolher a cena (o mais importante):
+- **Parta do conteúdo deste vídeo**, não de uma paisagem genérica. Procure na transcrição uma
+  imagem concreta: um objeto, uma metáfora, uma história ou parábola citada, um lugar descrito
+  (ex.: uma janela aberta, uma semente brotando, uma ponte, uma lamparina acesa, um barco no
+  cais, um caminho com bifurcação, uma muda recém-plantada, uma mesa simples com pão).
+- **Evite o clichê** "pessoa de costas num campo/lago ao amanhecer". Use figura humana só quando
+  ela for essencial à ideia; muitas capas ficam melhores com um objeto ou um detalhe da natureza.
+- **Varie** o enquadramento (plano aberto, plano médio, detalhe em close de um objeto ou planta),
+  o ambiente (interior aconchegante, jardim, mar, montanha, cidade pequena, floresta, céu) e a
+  hora/luz (manhã, golden hour, luz de vela, dia nublado claro), sempre dentro da paleta clara
+  e serena do preset.
+
 Regras para `prompt_imagem`:
 - Em **inglês**, uma descrição visual concreta da cena (assunto, ambiente, luz, enquadramento),
   com 25 a 60 palavras, compatível com a capa {tipo}.
 - **Nunca** peça texto, letras, palavras, placas, legendas ou logotipos.
 - Pessoas, se houver, de costas, em silhueta ou à distância (sem rostos e mãos em close).
-- Deixe uma área limpa e calma (céu, névoa, parede, água) do lado indicado em `posicao_texto`,
-  para o título ser escrito depois. Para `short`, mantenha o assunto principal no terço central.
+- Deixe uma área limpa e calma (céu, névoa, parede, água, fundo desfocado) do lado indicado em
+  `posicao_texto`, para o título ser escrito depois. Escolha `posicao_texto` pela composição da
+  cena (não use sempre o mesmo lado). Para `short`, mantenha o assunto principal no terço central.
 - Não inclua sufixo de estilo genérico (ele é adicionado depois pelo programa).
