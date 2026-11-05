@@ -4,12 +4,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
-### Fase 1 — Listagem da playlist e detecção de tipo
+### Fase 1 — Listagem da playlist e detecção de tipo ✅ (concluída em 2026-11-05)
 - `estado.py`: estado por vídeo em SQLite (`saida/estado.db`), status só avança, erros com contagem de tentativas.
 - `playlist.py`: listagem com yt-dlp (`extract_flat`), metadados completos sem baixar mídia, detecção longo/Short (≤ 180 s e vertical) com fallback pela URL `/shorts/`, `meta.json` por vídeo, conferência do `channel_id`.
 - Comando `yt-thumbnail listar [--job] [--ids] [--forcar]`.
 - Nova chave `ytdlp.cookies_navegador`.
 - Docs: `uso-cli.md`, `configuracao.md`, `arquitetura.md` (novo), solução de problemas do yt-dlp.
+- Validado no PC das GPUs com duas playlists reais: 100 Shorts (360×640 a 1080×1920, 0:17 a 2:59) e 241 vídeos longos (1920×1080), todos com o tipo correto, sem erros; a reexecução não duplica (~2 s por vídeo na 1ª vez, segundos na 2ª).
 
 ### Fase 0 — Ambiente, esqueleto e verificação ✅ (concluída em 2026-11-05)
 - Estrutura do projeto, `pyproject.toml` (pacote `yt_thumbnail`, comando `yt-thumbnail`, licença GPL-3.0-or-later).

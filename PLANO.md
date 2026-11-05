@@ -234,7 +234,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/instalacao-windows.md` (passo a passo do zero, incluindo drivers e FFmpeg), esqueleto do README.
 **Aceite:** `check_env.py` mostra as 2 GPUs e todos os itens OK; `yt-thumbnail --help` funciona; CI verde.
 
-### Fase 1 — Listagem da playlist e detecção de tipo
+### Fase 1 — Listagem da playlist e detecção de tipo ✅ concluída (2026-11-05)
 **Tarefas**
 - `yt-dlp --flat-playlist -J <url>` para a lista; metadados por vídeo (duração, largura/altura, `channel_id`) com uma chamada de metadados completa do `yt-dlp`, sem baixar mídia.
 - Classificar `tipo: longo | short` (regra da seção 3).
