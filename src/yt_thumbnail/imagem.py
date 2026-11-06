@@ -203,13 +203,15 @@ class GeradorSDXL:
         if self.cpu_offload:
             pipe.enable_model_cpu_offload(gpu_id=self.gpu)
         elif self.divide_gpus:
+            # GPU de imagem: só o UNet. GPU de texto: codificadores + VAE em fp32
+            # (o VAE do SDXL precisa de fp32 para não gerar NaN; lá sobra memória).
             pipe.unet.to(f"cuda:{self.gpu}")
-            pipe.vae.to(f"cuda:{self.gpu}")
+            pipe.vae.to(f"cuda:{self.gpu_texto}", dtype=torch.float32)
             pipe.text_encoder.to(f"cuda:{self.gpu_texto}")
             pipe.text_encoder_2.to(f"cuda:{self.gpu_texto}")
-            # sem os codificadores, o diffusers executa na GPU do UNet/VAE
+            # sem codificadores nem VAE, o diffusers executa na GPU do UNet e devolve latentes
             self._pipe_img = StableDiffusionXLPipeline(
-                vae=pipe.vae,
+                vae=None,
                 text_encoder=None,
                 text_encoder_2=None,
                 tokenizer=pipe.tokenizer,
@@ -261,14 +263,33 @@ class GeradorSDXL:
                 negative_prompt_2=p.negative_prompt,
             )
         destino = torch.device(f"cuda:{self.gpu}")
-        resultado = self._pipe_img(
+        latentes = self._pipe_img(
             prompt_embeds=emb.to(destino),
             negative_prompt_embeds=emb_neg.to(destino),
             pooled_prompt_embeds=pooled.to(destino),
             negative_pooled_prompt_embeds=pooled_neg.to(destino),
+            output_type="latent",
             **comuns,
-        )
-        return resultado.images[0]
+        ).images
+        return self._decodificar(pipe, latentes)
+
+    def _decodificar(self, pipe: Any, latentes: Any) -> Image.Image:
+        """Converte os latentes em imagem com o VAE (fp32) na GPU de texto."""
+        import torch
+
+        vae = pipe.vae
+        with torch.no_grad():
+            z = latentes.to(vae.device, dtype=vae.dtype)
+            media = getattr(vae.config, "latents_mean", None)
+            desvio = getattr(vae.config, "latents_std", None)
+            if media is not None and desvio is not None:
+                m = torch.tensor(media).view(1, -1, 1, 1).to(z)
+                d = torch.tensor(desvio).view(1, -1, 1, 1).to(z)
+                z = z * d / vae.config.scaling_factor + m
+            else:
+                z = z / vae.config.scaling_factor
+            imagem = vae.decode(z, return_dict=False)[0]
+        return pipe.image_processor.postprocess(imagem, output_type="pil")[0]
 
 
 # --------------------------------------------------------------------------- job
