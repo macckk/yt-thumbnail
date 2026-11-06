@@ -13,7 +13,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - SDXL dividido entre as duas GPUs de 8 GB: UNet na GPU `imagem`; codificadores de texto e VAE (fp32) na nova `gpu.texto_sdxl` (padrão: a de transcrição).
 - VAE tiling compatível com diffusers 0.42 (`pipe.vae.enable_tiling`).
 - Template de análise pede que o `prompt_imagem` comece pela composição (o fim pode ser cortado no limite de 77 tokens).
-- Validado no PC das GPUs (2× RTX 3060 Ti, 8 GB de RAM): ~52 s por imagem em 1344×768, pico de VRAM ~6,1 GB (UNet) e ~8 GB (codificadores + VAE), pico de RAM do processo 4,7 GB; imagens sem texto, claras e serenas (longo e Short). Pendente: a GPU 1 cai do barramento PCIe sob carga contínua (erros WHEA no root port), a investigar no hardware.
+- Validado no PC das GPUs (2× RTX 3060 Ti, 8 GB de RAM): ~52 s por imagem em 1344×768, pico de VRAM ~6,1 GB (UNet) e ~8 GB (codificadores + VAE), pico de RAM do processo 4,7 GB; imagens sem texto, claras e serenas (longo e Short). Pendente: a GPU 1 cai do barramento PCIe sob carga contínua (erros WHEA no root port), a investigar no hardware. Com uma GPU só (todas as chaves de `gpu` em `0`) a geração funciona, a ~5 min por imagem.
 
 ### Fase 3 — Análise e prompt (Claude) ✅ (concluída em 2026-11-05)
 - `analise/base.py`: interface `BackendAnalise`, montagem do prompt (template + preset + tipo), transcrição longa reduzida a início/meio/fim, extração e validação do JSON (esquema + tamanho do título do preset) com novas tentativas explicando o erro.
