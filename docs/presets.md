@@ -63,8 +63,8 @@ Usada por `yt-thumbnail gerar` (SDXL).
 - 1º codificador: só a cena (`prompt_imagem` da análise);
 - 2º codificador (o maior, que mais pesa no estilo): `estilo_sufixo`, depois a cena.
 
-O `negative_prompt` vai para os dois. Mantenha o `estilo_sufixo` curto (até ~25 palavras).
+O `negative_prompt` vai para os dois. Mantenha o `estilo_sufixo` curto (até ~25 palavras): no 2º codificador ele vem antes da cena, e o que passar de 77 tokens é cortado do **fim** da cena. Por isso o template de análise pede que o `prompt_imagem` comece pela composição (enquadramento e lado da área limpa) — a cena completa continua no 1º codificador.
 
-**Requisitos.** SDXL fp16 com VAE tiling cabe numa GPU de 8 GB em 1344×768. Se aparecer "CUDA out of memory", ligue `imagem.attention_slicing`; como último recurso, `imagem.cpu_offload`.
+**Requisitos.** Com duas GPUs de 8 GB, o UNet fica numa e os codificadores + VAE na outra (veja `gpu.texto_sdxl` em [configuracao.md](configuracao.md)). ~52 s por imagem em 1344×768 numa RTX 3060 Ti, mais ~10 s de carga por execução.
 
 Os detalhes da camada de tipografia serão documentados na fase 5.

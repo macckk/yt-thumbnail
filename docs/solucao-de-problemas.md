@@ -114,11 +114,19 @@ Aumente `analise.timeout_segundos` ou use um modelo mais rápido em `analise.mod
 
 ### `CUDA out of memory`
 
-Feche outros programas que usem a GPU de imagem (`nvidia-smi` mostra) e ligue `imagem.attention_slicing: true`. Se persistir, `imagem.cpu_offload: true` (bem mais lento). Confira se `gpu.imagem` aponta para a GPU livre (a de transcrição pode estar ocupada pelo Whisper).
+Feche outros programas que usem as GPUs (`nvidia-smi` mostra) e não rode `transcrever` junto com `gerar`: o Whisper ocupa a GPU de transcrição, que por padrão também recebe os codificadores e o VAE do SDXL (`gpu.texto_sdxl`). Com duas GPUs, confira se `gpu.imagem` e `gpu.texto_sdxl` são diferentes. Com uma GPU só, use `imagem.cpu_offload: true` (bem mais lento e usa mais RAM).
+
+### `CUBLAS_STATUS_INTERNAL_ERROR`
+
+Visto com `imagem.attention_slicing: true` perto do limite de VRAM. Deixe `attention_slicing: false`.
+
+### "GPUs encontradas: 0" / `nvidia-smi` não fala com o driver
+
+O driver de vídeo travou (no Visualizador de Eventos, Sistema: evento 4101, "nvlddmkm parou de responder"). Reinicie o PC. Se `nvidia-smi` disser **"GPU is lost"** e houver, segundos antes, eventos **WHEA-Logger 17** ("Erro de hardware corrigido", PCI Express Root Port), a placa caiu do barramento: o problema é físico — encaixe da placa ou do riser, cabos de energia PCIe, fonte, ou o slot. Em placas-mãe X99/C612 costuma resolver fixar o slot em PCIe Gen 2/Gen 3 na BIOS em vez de "Auto". Enquanto isso, deixe a GPU suspeita com o trabalho mais leve (`gpu.texto_sdxl`) e o UNet na outra (`gpu.imagem`). Se repetir em cálculos longos, as causas comuns são o tempo limite do driver (TDR) na GPU que também alimenta o monitor — deixe o monitor na GPU de texto ou aumente o `TdrDelay` no registro do Windows, por sua conta — ou a fonte de energia no limite com as duas placas em carga.
 
 ### Primeira execução demorada
 
-O SDXL (~7 GB, variante fp16) é baixado do Hugging Face para o cache (`HF_HOME`). Depois disso, a carga leva ~1 min por execução. Com pouca RAM (8 GB), a carga usa o arquivo de paginação: deixe o tamanho da paginação do Windows como "gerenciado pelo sistema".
+O SDXL (~7 GB, variante fp16) é baixado do Hugging Face para o cache (`HF_HOME`). Depois disso, a carga leva ~10 s por execução (mais, se a RAM estiver cheia). Com pouca RAM (8 GB), a carga usa o arquivo de paginação: deixe o tamanho da paginação do Windows como "gerenciado pelo sistema".
 
 ### As imagens têm letras ou rabiscos parecidos com texto
 

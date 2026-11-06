@@ -139,7 +139,12 @@ Implemente `BackendAnalise` (atributo `nome` e método `gerar(prompt, esquema) -
 ## Fase 4 — Geração da imagem
 
 1. **Parâmetros** (`imagem.montar_parametros`): `prompt` = cena da análise; `prompt_2` = `estilo_sufixo` + cena; `negative_prompt` do preset nos dois codificadores; `guidance_scale` e `passos` do preset; resolução nativa do tipo (`formatos.<tipo>.geracao`).
-2. **Pipeline** (`GeradorSDXL`): `StableDiffusionXLPipeline` fp16 (`variant="fp16"`, `low_cpu_mem_usage`) em `cuda:<gpu.imagem>`, com `enable_vae_tiling()`; `attention_slicing` e `cpu_offload` opcionais. Carregado uma vez por execução, no primeiro vídeo.
+2. **Pipeline** (`GeradorSDXL`): `StableDiffusionXLPipeline` fp16 (`variant="fp16"`, `low_cpu_mem_usage`), carregado uma vez por execução, no primeiro vídeo. Com `gpu.texto_sdxl` diferente de `gpu.imagem` (padrão com duas GPUs), o trabalho é dividido:
+   - `encode_prompt` na GPU de texto (codificadores CLIP-L e OpenCLIP-bigG); os embeddings vão para a GPU de imagem;
+   - difusão num segundo pipeline só com o UNet e o scheduler (`output_type="latent"`) na GPU de imagem;
+   - decodificação dos latentes pelo VAE em **fp32** (o VAE do SDXL gera NaN/preto em fp16), com tiling, na GPU de texto; depois `image_processor.postprocess`.
+
+   Numa GPU só (ou com `cpu_offload`), o pipeline inteiro roda em `cuda:<gpu.imagem>`. `attention_slicing` é opcional e desliga o SDPA — em testes provocou `CUBLAS_STATUS_INTERNAL_ERROR`, por isso fica desligado por padrão.
 3. **Variações**: uma seed aleatória por variação (`torch.Generator` na GPU), salvas em `imagens.json` e no estado.
 4. **Ajuste** (`ajustar`): escala para cobrir a saída (`formatos.<tipo>.saida`) e recorte central — 1344×768 → 1280×720; 768×1344 → 1080×1920.
 

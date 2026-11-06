@@ -58,4 +58,7 @@ Regras para `prompt_imagem`:
 - Deixe uma área limpa e calma (céu, névoa, parede, água, fundo desfocado) do lado indicado em
   `posicao_texto`, para o título ser escrito depois. Escolha `posicao_texto` pela composição da
   cena (não use sempre o mesmo lado). Para `short`, mantenha o assunto principal no terço central.
+- Comece o prompt pela composição (enquadramento e onde fica a área limpa, por exemplo
+  "Medium wide shot, calm open sky on the left, ...") e depois descreva a cena: o fim do prompt
+  pode ser cortado pelo limite de tokens do SDXL.
 - Não inclua sufixo de estilo genérico (ele é adicionado depois pelo programa).

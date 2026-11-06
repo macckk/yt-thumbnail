@@ -23,9 +23,12 @@ O caminho pode ser trocado com `--config` ou com a variável de ambiente `YT_THU
 | Chave | Padrão | Descrição |
 |---|---|---|
 | `transcricao` | `0` | índice da GPU do faster-whisper |
-| `imagem` | `1` | índice da GPU do SDXL |
+| `imagem` | `1` | índice da GPU do SDXL (só o UNet, ~5 GB + ativações) |
+| `texto_sdxl` | `null` | GPU dos codificadores de texto e do VAE do SDXL; `null` = a de `transcricao` |
 
-Com uma GPU só, use `0` nas duas.
+Em placas de 8 GB o SDXL inteiro não cabe numa GPU só em 1344×768. Por isso, com duas GPUs, o trabalho é dividido: o UNet (a difusão) fica na GPU `imagem`, e os codificadores de texto (~1,6 GB) e o VAE em fp32 (decodificação final) ficam na GPU `texto_sdxl`. Medido em 2× RTX 3060 Ti: pico de ~6,1 GB na GPU de imagem e ~8 GB na outra (o cache do PyTorch ocupa o que estiver livre). Não rode `transcrever` e `gerar` ao mesmo tempo.
+
+Com uma GPU só, use `0` em todas e ligue `imagem.cpu_offload` (8 GB) se faltar memória.
 
 ## `ytdlp`
 

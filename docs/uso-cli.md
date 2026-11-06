@@ -81,7 +81,7 @@ yt-thumbnail analisar --ids ID_DO_VIDEO --forcar
 
 Gera as imagens de fundo, **sem texto**, com o SDXL na GPU `gpu.imagem`, para os vídeos já analisados. Cada vídeo recebe `--variacoes` imagens (padrão `imagem.variacoes`, 3) com seeds diferentes, geradas na resolução nativa do tipo (1344×768 longo, 768×1344 Short) e ajustadas para a saída (1280×720 / 1080×1920). Grava `base_1..N.png` e `imagens.json` (seeds e parâmetros) e registra `imagens_geradas`.
 
-- O modelo é carregado uma vez por execução (~1 min); a primeira execução baixa o SDXL (~7 GB) do Hugging Face.
+- O modelo é carregado uma vez por execução (~10 s; ~52 s por imagem numa RTX 3060 Ti); a primeira execução baixa o SDXL (~7 GB) do Hugging Face.
 - `--forcar` gera de novo com seeds novas.
 
 ```powershell
