@@ -484,5 +484,73 @@ def gerar(
         raise typer.Exit(1)
 
 
+@app.command()
+def compor(
+    job: OpcaoJob = None,
+    ids: OpcaoIds = None,
+    tipo: OpcaoTipo = None,
+    forcar: OpcaoForcar = False,
+    limite: OpcaoLimite = None,
+    config: OpcaoConfig = None,
+) -> None:
+    """Escreve o título sobre as imagens de fundo (Pillow) e gera as capas finais.
+
+    Usa o titulo_capa e a posicao_texto da análise e a tipografia do preset. Grava capa_N.jpg
+    (< 2 MB), a miniatura de verificação mini_N.jpg e capas.json e registra `capas_compostas`.
+    """
+    from rich.markup import escape
+
+    from yt_thumbnail.composicao import ErroComposicao, abrir_fonte_do_preset, compor_job
+    from yt_thumbnail.estado import abrir_estado
+
+    cfg = _carregar(config)
+    presets = cfg.validar_presets()
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for j in _jobs_selecionados(cfg, job):
+            tipos = _tipos_do_job(j, tipo)
+            if not tipos:
+                console.print(f"[yellow]{j.nome}:[/] o tipo {tipo} não está em `tipos` do job.")
+                continue
+            preset = presets[j.preset]
+            try:
+                abrir, nome_fonte = abrir_fonte_do_preset(preset.tipografia, cfg.base)
+            except ErroComposicao as e:
+                console.print(f"[red]Erro:[/] {escape(str(e))}")
+                raise typer.Exit(1) from e
+            with console.status(f"[bold]{j.nome}[/]: preparando...") as status:
+
+                def progresso(video_id: str, i: int, total: int, _s=status, _j=j) -> None:
+                    _s.update(f"[bold]{_j.nome}[/]: compondo {i}/{total} — {video_id}")
+
+                r = compor_job(
+                    job=j.nome,
+                    tipos=tipos,
+                    pasta_saida=cfg.pasta_saida,
+                    estado=estado,
+                    preset=preset,
+                    abrir=abrir,
+                    nome_fonte=nome_fonte,
+                    ids=_ids(ids),
+                    forcar=forcar,
+                    limite=limite,
+                    ao_progredir=progresso,
+                )
+            n_capas = sum(len(d.capas) for d in r.feitos.values())
+            console.print(
+                f"[bold]{j.nome}[/]: {len(r.feitos)} vídeo(s) com capas novas ({n_capas} capas); "
+                f"{len(r.existentes)} já composto(s); {len(r.erros)} erro(s)."
+            )
+            for vid, dados in r.feitos.items():
+                avisos = sorted({a for c in dados.capas for a in c.avisos})
+                if avisos:
+                    console.print(f"  [yellow]aviso[/] {vid}: {escape('; '.join(avisos))}")
+            for vid, msg in r.erros.items():
+                console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
+            falhou = falhou or bool(r.erros)
+    if falhou:
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()

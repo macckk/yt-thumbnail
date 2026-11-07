@@ -3,8 +3,9 @@
 
 Uso: ``python scripts/baixar_fontes.py [--forcar]``
 
-As fontes de peso variável são instanciadas no peso Light (300) com fontTools, se
-disponível; senão o arquivo variável é salvo como está (o Pillow usa o peso padrão).
+As fontes variáveis são instanciadas (peso Light 300 e, quando houver, tamanho óptico de
+título) com fontTools, se disponível; senão o arquivo variável é salvo como está
+(o Pillow usa o peso padrão).
 """
 
 from __future__ import annotations
@@ -18,15 +19,20 @@ RAIZ = Path(__file__).resolve().parent.parent
 PASTA = RAIZ / "assets" / "fonts"
 BASE = "https://raw.githubusercontent.com/google/fonts/main/ofl"
 
-# destino -> (pasta no repositório google/fonts, arquivo variável, peso)
-FONTES: dict[str, tuple[str, str, int]] = {
-    "CormorantGaramond-Light.ttf": ("cormorantgaramond", "CormorantGaramond[wght].ttf", 300),
-    "CormorantGaramond-Regular.ttf": ("cormorantgaramond", "CormorantGaramond[wght].ttf", 400),
-    "Raleway-Light.ttf": ("raleway", "Raleway[wght].ttf", 300),
-    "JosefinSans-Light.ttf": ("josefinsans", "JosefinSans[wght].ttf", 300),
+# destino -> (pasta no repositório google/fonts, arquivo variável, eixos da instância)
+FONTES: dict[str, tuple[str, str, dict[str, float]]] = {
+    # Newsreader no tamanho óptico de título (opsz 72): traço fino e delicado
+    "Newsreader-Light.ttf": ("newsreader", "Newsreader[opsz,wght].ttf", {"wght": 300, "opsz": 72}),
+    "Newsreader-Regular.ttf": (
+        "newsreader",
+        "Newsreader[opsz,wght].ttf",
+        {"wght": 400, "opsz": 72},
+    ),
+    "Raleway-Light.ttf": ("raleway", "Raleway[wght].ttf", {"wght": 300}),
+    "JosefinSans-Light.ttf": ("josefinsans", "JosefinSans[wght].ttf", {"wght": 300}),
 }
 LICENCAS = {
-    "cormorantgaramond": "OFL-CormorantGaramond.txt",
+    "newsreader": "OFL-Newsreader.txt",
     "raleway": "OFL-Raleway.txt",
     "josefinsans": "OFL-JosefinSans.txt",
 }
@@ -38,7 +44,7 @@ def _baixar(url: str) -> bytes:
         return r.read()
 
 
-def _instanciar(dados: bytes, peso: int) -> bytes:
+def _instanciar(dados: bytes, eixos: dict[str, float]) -> bytes:
     try:
         from io import BytesIO
 
@@ -53,7 +59,8 @@ def _instanciar(dados: bytes, peso: int) -> bytes:
     fonte = TTFont(BytesIO(dados))
     if "fvar" not in fonte:
         return dados
-    inst = instantiateVariableFont(fonte, {"wght": peso})
+    validos = {a.axisTag for a in fonte["fvar"].axes}
+    inst = instantiateVariableFont(fonte, {k: v for k, v in eixos.items() if k in validos})
     saida = BytesIO()
     inst.save(saida)
     return saida.getvalue()
@@ -66,7 +73,7 @@ def main() -> int:
     args = parser.parse_args()
     PASTA.mkdir(parents=True, exist_ok=True)
     cache: dict[str, bytes] = {}
-    for destino, (familia, arquivo, peso) in FONTES.items():
+    for destino, (familia, arquivo, eixos) in FONTES.items():
         alvo = PASTA / destino
         if alvo.exists() and not args.forcar:
             print(f"ok   {destino} (já existe)")
@@ -75,7 +82,7 @@ def main() -> int:
         if url not in cache:
             print(f"get  {url}")
             cache[url] = _baixar(url)
-        alvo.write_bytes(_instanciar(cache[url], peso))
+        alvo.write_bytes(_instanciar(cache[url], eixos))
         print(f"ok   {destino}")
     for familia, nome in LICENCAS.items():
         alvo = PASTA / nome

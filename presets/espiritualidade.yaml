@@ -34,7 +34,7 @@ imagem:
   passos: 30
 
 tipografia:
-  fonte: assets/fonts/CormorantGaramond-Light.ttf
+  fonte: assets/fonts/Newsreader-Light.ttf
   fonte_alternativa: assets/fonts/Raleway-Light.ttf
   cor_escura: "#4A3F35"
   cor_clara: "#FFFFFF"
@@ -44,5 +44,5 @@ tipografia:
 
 layouts:
   # área segura = [x0, y0, x1, y1] em frações da largura/altura
-  longo: { area_segura: [0.06, 0.08, 0.80, 0.85] }
-  short: { area_segura: [0.10, 0.33, 0.90, 0.66] }
+  longo: { area_segura: [0.06, 0.08, 0.94, 0.85] }  # o canto inferior direito (duração) é evitado no código
+  short: { area_segura: [0.08, 0.22, 0.92, 0.78] }  # quadrado central (visível nos recortes do YouTube)

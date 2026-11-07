@@ -17,7 +17,8 @@ def test_espiritualidade(raiz: Path) -> None:
     assert p.analise.titulo_palavras == (2, 5)
     assert "text" in p.imagem.negative_prompt
     assert p.tipografia.cor_escura == "#4A3F35"
-    assert p.layouts.short.area_segura == (0.10, 0.33, 0.90, 0.66)
+    assert p.layouts.short.area_segura == (0.08, 0.22, 0.92, 0.78)
+    assert p.tipografia.fonte.name == "Newsreader-Light.ttf"
 
 
 def test_listar(raiz: Path, tmp_path: Path) -> None:
