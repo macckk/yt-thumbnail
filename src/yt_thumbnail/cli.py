@@ -552,5 +552,165 @@ def compor(
         raise typer.Exit(1)
 
 
+ArgIds = Annotated[
+    list[str] | None,
+    typer.Argument(help="IDs dos vídeos (separados por espaço).", show_default=False),
+]
+
+
+@app.command()
+def revisar(
+    job: OpcaoJob = None,
+    tipo: OpcaoTipo = None,
+    abrir: Annotated[
+        bool, typer.Option("--abrir/--nao-abrir", help="Abre a página no navegador.")
+    ] = True,
+    offline: Annotated[
+        bool, typer.Option("--offline", help="Não baixa as capas atuais do YouTube.")
+    ] = False,
+    config: OpcaoConfig = None,
+) -> None:
+    """Gera a página de revisão (saida/<job>/revisao.html) e baixa a capa atual (backup).
+
+    A capa atual de cada vídeo vai para capa_original.jpg uma única vez: ela é o backup que
+    `restaurar` usa e nunca é sobrescrita.
+    """
+    import webbrowser
+
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.revisao import preparar_revisao
+
+    cfg = _carregar(config)
+    paginas = []
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for j in _jobs_selecionados(cfg, job):
+            tipos = _tipos_do_job(j, tipo)
+            with console.status(f"[bold]{j.nome}[/]: baixando capas atuais e montando a página..."):
+                r = preparar_revisao(
+                    job=j.nome,
+                    pasta_saida=cfg.pasta_saida,
+                    estado=estado,
+                    tipos=tipos,
+                    baixar=None if offline else _baixador_padrao(),
+                )
+            pend = sum(1 for i in r.itens if i.registro.status == "capas_compostas")
+            console.print(
+                f"[bold]{j.nome}[/]: {len(r.itens)} vídeo(s) na revisão, {pend} pendente(s); "
+                f"{len(r.originais_baixadas)} capa(s) atual(is) baixada(s) agora."
+            )
+            for vid, msg in r.avisos.items():
+                console.print(f"  [yellow]aviso[/] {vid}: {escape(msg)}")
+            if r.pagina is not None:
+                console.print(f"  página: {r.pagina.resolve()}")
+                paginas.append(r.pagina)
+    if abrir:
+        for p in paginas:
+            webbrowser.open(p.resolve().as_uri())
+
+
+def _baixador_padrao():  # noqa: ANN202 - isolado para os testes trocarem
+    from yt_thumbnail.revisao import baixar_http
+
+    return baixar_http
+
+
+def _resolver_job(cfg: Config, estado, job: str | None, video_id: str) -> str:  # noqa: ANN001
+    from yt_thumbnail.revisao import localizar_jobs
+
+    nomes = [j.nome for j in _jobs_selecionados(cfg, job)]
+    achados = localizar_jobs(estado, nomes, video_id)
+    if not achados:
+        raise typer.BadParameter(f"{video_id} não está em nenhum job ({', '.join(nomes)}).")
+    if len(achados) > 1:
+        raise typer.BadParameter(
+            f"{video_id} está em mais de um job ({', '.join(achados)}); use --job."
+        )
+    return achados[0]
+
+
+@app.command()
+def aprovar(
+    ids: ArgIds = None,
+    variacao: Annotated[
+        int, typer.Option("--variacao", "-v", min=1, help="Número da variação (1, 2, 3...).")
+    ] = ...,  # type: ignore[assignment]
+    todos: Annotated[
+        bool, typer.Option("--todos", help="Todos os vídeos pendentes de revisão.")
+    ] = False,
+    job: OpcaoJob = None,
+    tipo: OpcaoTipo = None,
+    forcar: Annotated[
+        bool, typer.Option("--forcar", help="Permite mudar a decisão de vídeo já enviado.")
+    ] = False,
+    config: OpcaoConfig = None,
+) -> None:
+    """Aprova uma variação de capa: `aprovar ID --variacao 2` ou `aprovar --todos --variacao 1`."""
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.revisao import ErroRevisao, pendentes
+    from yt_thumbnail.revisao import aprovar as aprovar_video
+
+    if bool(ids) == todos:
+        raise typer.BadParameter("informe os IDs ou --todos (um dos dois).")
+    cfg = _carregar(config)
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        if todos:
+            alvos = [
+                (j.nome, vid)
+                for j in _jobs_selecionados(cfg, job)
+                for vid in pendentes(estado, j.nome, _tipos_do_job(j, tipo))
+            ]
+        else:
+            alvos = [(_resolver_job(cfg, estado, job, vid), vid) for vid in ids or []]
+        for nome_job, vid in alvos:
+            try:
+                aprovar_video(estado, cfg.pasta_saida, nome_job, vid, variacao, forcar=forcar)
+            except ErroRevisao as e:
+                console.print(f"[red]erro[/] {escape(str(e))}")
+                falhou = True
+            else:
+                console.print(f"[green]aprovado[/] {nome_job}/{vid}: variação {variacao}")
+    if not alvos:
+        console.print("Nenhum vídeo pendente de revisão.")
+    if falhou:
+        raise typer.Exit(1)
+
+
+@app.command()
+def rejeitar(
+    ids: Annotated[list[str], typer.Argument(help="IDs dos vídeos.", show_default=False)],
+    job: OpcaoJob = None,
+    forcar: Annotated[
+        bool, typer.Option("--forcar", help="Permite mudar a decisão de vídeo já enviado.")
+    ] = False,
+    config: OpcaoConfig = None,
+) -> None:
+    """Rejeita as capas de um vídeo (ele não será enviado)."""
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.revisao import ErroRevisao
+    from yt_thumbnail.revisao import rejeitar as rejeitar_video
+
+    cfg = _carregar(config)
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for vid in ids:
+            nome_job = _resolver_job(cfg, estado, job, vid)
+            try:
+                rejeitar_video(estado, nome_job, vid, forcar=forcar)
+            except ErroRevisao as e:
+                console.print(f"[red]erro[/] {escape(str(e))}")
+                falhou = True
+            else:
+                console.print(f"[yellow]rejeitado[/] {nome_job}/{vid}")
+    if falhou:
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()
