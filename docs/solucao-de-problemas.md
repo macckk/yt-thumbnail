@@ -136,6 +136,20 @@ O SDXL (~7 GB, variante fp16) é baixado do Hugging Face para o cache (`HF_HOME`
 
 O SDXL às vezes desenha "pseudo-texto". O `negative_prompt` do preset já inclui `text, letters, words`; gere outras variações (`--forcar`) ou deixe o template de análise insistir em áreas lisas (céu, parede, névoa) do lado do título.
 
+## Composição (Pillow)
+
+### `Fonte do preset não encontrada`
+
+Rode `python scripts/baixar_fontes.py` (com `pip install fonttools` antes, para fixar o peso Light). Os arquivos `.ttf` não vão para o git.
+
+### Acentos deslocados no título (ex.: `você` com o `^` ao lado)
+
+A fonte depende de regras OpenType que o Pillow no Windows não aplica (falta a `libraqm`). Troque a fonte do preset (ver [presets.md](presets.md#camada-de-tipografia)); a Newsreader, a Raleway e a Josefin Sans funcionam.
+
+### Aviso `contraste baixo` ou `fonte pequena na miniatura`
+
+O fundo atrás do título é muito parecido com as duas cores do preset, ou o título é longo demais. Gere outra variação (`gerar --forcar`), encurte o título (análise) ou aumente `tipografia.veu.opacidade`.
+
 ## Configuração
 
 ### `Arquivo de configuração config.yaml não encontrado`

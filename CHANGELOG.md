@@ -4,6 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Fase 5 — Composição do título (Pillow) ✅ (concluída em 2026-11-07)
+- `composicao.py`: região do título pela `posicao_texto` dentro da área segura (longo evita o canto inferior direito; Short no quadrado central, acima do assunto), maior fonte que cabe em até `linhas_max` linhas com quebra equilibrada, cor escura ou clara pelo contraste WCAG, véu translúcido que sobe até o contraste chegar a 3:1, sombra suave.
+- JPEG < 2 MB (qualidade 90, baixando se precisar), miniatura de verificação 320×180 / 180×320 e `capas.json` com tamanho da fonte, contraste e avisos.
+- Comando `yt-thumbnail compor [--job] [--ids] [--tipo] [--forcar] [--limite]`.
+- Preset `espiritualidade`: fonte principal **Newsreader Light** (tamanho óptico de título) no lugar da Cormorant Garamond, que desenha os acentos deslocados no Pillow sem `libraqm` (Windows); área segura do longo simétrica e a do Short no quadrado central.
+- `scripts/baixar_fontes.py` instancia também o eixo de tamanho óptico; fontes baixadas ficam fora do git.
+- Validado no PC das GPUs: 18 capas (4 palestras + 2 Shorts, 3 variações cada) em 4 s, de 110 a 225 KB, contraste entre 5,3:1 e 7,5:1, sem avisos; legíveis nas miniaturas.
+
 ### Fase 4 — Geração da imagem (SDXL) ✅ (concluída em 2026-11-07)
 - `imagem.py`: SDXL 1.0 base fp16 na GPU de imagem, carregado uma vez por execução, VAE tiling; `attention_slicing` e `cpu_offload` opcionais.
 - Prompt dividido entre os dois codificadores do SDXL (cena no 1º; estilo do preset + cena no 2º) para não cortar nada no limite de 77 tokens.

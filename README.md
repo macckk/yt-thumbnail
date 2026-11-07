@@ -11,7 +11,7 @@ Para cada vídeo (longo ou Short) de uma playlist pública dos seus canais:
 5. gera uma página HTML para **revisão humana** (antes × depois);
 6. envia a capa aprovada pela YouTube Data API, no canal certo.
 
-> **Status:** em desenvolvimento — Fase 4 (geração das imagens com SDXL). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
+> **Status:** em desenvolvimento — Fase 5 (composição do título). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
 
 ## Requisitos
 

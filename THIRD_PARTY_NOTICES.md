@@ -17,7 +17,7 @@ Ficam em `assets/fonts/`, cada família acompanhada do seu `OFL-*.txt`.
 
 | Fonte | Origem |
 |---|---|
-| Cormorant Garamond | Google Fonts |
+| Newsreader | Google Fonts (Production Type) |
 | Raleway | Google Fonts |
 | Josefin Sans | Google Fonts |
 

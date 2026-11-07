@@ -96,7 +96,7 @@ Presets ficam em `presets/<nome>.yaml` e controlam **três camadas**: o tom da a
   - `estilo_sufixo` (exemplo): `soft natural light, serene, peaceful atmosphere, pastel tones, airy, gentle glow, high key, dreamy, cinematic composition, empty space for text`;
   - `negative_prompt` (exemplo): `text, letters, words, watermark, logo, dark, gloomy, horror, blood, violence, harsh shadows, oversaturated, neon, cluttered, deformed hands, distorted face`.
 - **Tipografia:**
-  - fontes finas e delicadas, livres (licença OFL, Google Fonts): **Cormorant Garamond Light/Regular** (principal), **Raleway Light** ou **Josefin Sans Light** (alternativas);
+  - fontes finas e delicadas, livres (licença OFL, Google Fonts): **Newsreader Light** (principal; a Cormorant Garamond, prevista antes, desenha os acentos deslocados no Pillow do Windows), **Raleway Light** ou **Josefin Sans Light** (alternativas);
   - usar peso **Light (300)**, não Thin (100): fonte muito fina some quando a capa aparece pequena;
   - cor do texto escura e quente sobre fundo claro (ex.: `#4A3F35`) ou branco com brilho suave sobre áreas mais escuras — escolha automática pelo brilho médio da região do texto;
   - legibilidade: véu/gradiente translúcido claro atrás do texto, sombra suave (blur) em vez de contorno grosso, tamanho de fonte generoso;
@@ -119,7 +119,7 @@ imagem:
   guidance_scale: 6.0
   passos: 30
 tipografia:
-  fonte: assets/fonts/CormorantGaramond-Light.ttf
+  fonte: assets/fonts/Newsreader-Light.ttf
   fonte_alternativa: assets/fonts/Raleway-Light.ttf
   cor_escura: "#4A3F35"
   cor_clara: "#FFFFFF"
@@ -127,8 +127,8 @@ tipografia:
   veu: { cor: "#FFF8EC", opacidade: 0.45, tipo: gradiente }
   linhas_max: 3
 layouts:
-  longo: { area_segura: [0.06, 0.08, 0.80, 0.85] }
-  short: { area_segura: [0.10, 0.33, 0.90, 0.66] }
+  longo: { area_segura: [0.06, 0.08, 0.94, 0.85] }
+  short: { area_segura: [0.08, 0.22, 0.92, 0.78] }
 ```
 
 ## 6. Estrutura do projeto
@@ -292,12 +292,12 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/presets.md` (camada de imagem), requisitos de VRAM, licença do SDXL em `THIRD_PARTY_NOTICES.md`.
 **Aceite:** 3 imagens sem texto por vídeo, no formato do tipo; claras e serenas conforme o preset; sem estouro de VRAM.
 
-### Fase 5 — Composição do título (Pillow)
+### Fase 5 — Composição do título (Pillow) ✅ concluída (2026-11-07)
 **Tarefas**
 - Layout por tipo (área segura do preset); posição pela `posicao_texto`.
 - Cor automática (escura ou clara) pelo brilho médio da região; véu translúcido + sombra suave.
 - Quebra em até `linhas_max` linhas; ajuste automático do tamanho da fonte.
-- Longo: evitar canto inferior direito. Short: título no terço central.
+- Longo: evitar canto inferior direito. Short: título no quadrado central (visível nos recortes do YouTube), acima do assunto.
 - JPEG qualidade ~90, garantindo **< 2 MB** (reduzir a qualidade em laço se passar).
 - Gerar também uma miniatura de verificação (320×180 / 180×320) para a revisão.
 - Comando: `yt-thumbnail compor`.

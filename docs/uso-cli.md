@@ -89,6 +89,19 @@ yt-thumbnail gerar --job palestras --limite 2
 yt-thumbnail gerar --ids ID_DO_VIDEO --forcar --variacoes 4
 ```
 
+### `yt-thumbnail compor [--job] [--ids] [--tipo] [--forcar] [--limite N]`
+
+Escreve o `titulo_capa` da análise sobre cada imagem de fundo, com a tipografia do preset, para os vídeos com imagens geradas. Grava, por variação, `capa_N.jpg` (JPEG, sempre < 2 MB) e `mini_N.jpg` (miniatura de verificação, 320×180 ou 180×320), além de `capas.json`, e registra `capas_compostas`. Leva menos de 1 s por capa e não usa GPU.
+
+- Pula vídeos já compostos; recompõe sozinho se as imagens forem geradas de novo depois.
+- `--forcar` recompõe (útil depois de mudar a tipografia do preset).
+- Avisos de legibilidade aparecem no fim (ver [presets.md](presets.md#camada-de-tipografia)).
+
+```powershell
+yt-thumbnail compor
+yt-thumbnail compor --job palestras --forcar
+```
+
 ## Comandos planejados
 
-`compor`, `revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).
+``revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).

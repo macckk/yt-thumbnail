@@ -42,6 +42,7 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `analise/base.py` | Fase 3: interface dos backends, prompt, validação e novas tentativas |
 | `analise/claude_code.py` | Fase 3: backend padrão (`claude -p`) |
 | `imagem.py` | Fase 4: SDXL, variações e ajuste para a saída |
+| `composicao.py` | Fase 5: título sobre as imagens (Pillow), capas e miniaturas |
 | `ambiente.py` | verificação do ambiente |
 | `cli.py` | comandos (Typer) |
 
@@ -167,5 +168,44 @@ Falhas (inclusive falta de VRAM) ficam no estado do vídeo e o lote continua.
   "saida": [1280, 720],
   "segundos": 95.2,
   "gerado_em": "2026-11-05T23:00:00+00:00"
+}
+```
+
+## Fase 5 — Composição do título
+
+Para cada `base_N.png` (`composicao.compor_capa`):
+
+1. **Região** (`regiao_texto`): a `posicao_texto` da análise escolhe um retângulo dentro de `layouts.<tipo>.area_segura` e o alinhamento (ver [presets.md](presets.md#camada-de-tipografia)).
+2. **Tamanho** (`ajustar_texto`): da maior fonte para a menor, de 2 em 2 px, a primeira em que o título cabe na região com até `linhas_max` linhas; a quebra (`quebrar`) testa todas as divisões e fica com a de linha mais longa mais curta. O título é normalizado (NFC, espaços simples).
+3. **Cor**: a de `cor_escura`/`cor_clara` com maior contraste WCAG contra a cor média do fundo atrás do bloco de texto.
+4. **Véu**: retângulo arredondado em volta do texto (encostado na borda do lado do título), desfocado (`gradiente`), na cor do véu; a opacidade sobe de 0,1 em 0,1 até o contraste chegar a 3:1 (máx. 0,85).
+5. **Sombra** e texto; **JPEG** com qualidade 90, baixando de 5 em 5 até caber em 2 MB (`salvar_jpeg`); miniatura de verificação.
+
+Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e `capas.json` for mais novo que `imagens.json`.
+
+### `capas.json`
+
+```json
+{
+  "titulo": "A felicidade mora dentro",
+  "posicao": "esquerda",
+  "tipo": "longo",
+  "fonte": "Newsreader-Light.ttf",
+  "capas": [
+    {
+      "arquivo": "capa_1.jpg",
+      "miniatura": "mini_1.jpg",
+      "base": "base_1.png",
+      "tamanho_fonte": 115,
+      "linhas": ["A felicidade", "mora dentro"],
+      "cor": "#4A3F35",
+      "contraste": 6.69,
+      "opacidade_veu": 0.45,
+      "qualidade": 90,
+      "bytes": 149504,
+      "avisos": []
+    }
+  ],
+  "composto_em": "2026-11-07T22:30:00+00:00"
 }
 ```
