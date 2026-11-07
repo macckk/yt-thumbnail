@@ -28,7 +28,7 @@ O caminho pode ser trocado com `--config` ou com a variável de ambiente `YT_THU
 
 Em placas de 8 GB o SDXL inteiro não cabe numa GPU só em 1344×768. Por isso, com duas GPUs, o trabalho é dividido: o UNet (a difusão) fica na GPU `imagem`, e os codificadores de texto (~1,6 GB) e o VAE em fp32 (decodificação final) ficam na GPU `texto_sdxl`. Medido em 2× RTX 3060 Ti: pico de ~6,1 GB na GPU de imagem e ~8 GB na outra (o cache do PyTorch ocupa o que estiver livre). Não rode `transcrever` e `gerar` ao mesmo tempo.
 
-Com uma GPU só, use `0` em todas. Numa RTX 3060 Ti de 8 GB isso funciona, mas o driver do Windows passa a usar a RAM do sistema como extensão da VRAM: 5 a 11 min por imagem (contra ~52 s com duas GPUs). `imagem.cpu_offload` é a alternativa, também lenta e com mais uso de RAM.
+Com uma GPU só, use `0` em todas e ligue **`imagem.cpu_offload: true`**: só a parte do modelo que está trabalhando fica na GPU e o resto espera na RAM. Medido numa RTX 3060 Ti de 8 GB: **~81 s por imagem** em 1344×768 (pico de 6,3 GB de VRAM). Sem `cpu_offload`, o pipeline inteiro não cabe, o driver do Windows usa a RAM do sistema como extensão da VRAM e leva de 5 a 11 min por imagem. Com 8 GB de RAM, o `cpu_offload` deixa a memória do sistema no limite (pico de 5,7 GB do processo; sobrou ~0 MB livre): feche outros programas e deixe o arquivo de paginação "gerenciado pelo sistema".
 
 ## `ytdlp`
 
@@ -67,7 +67,7 @@ Com uma GPU só, use `0` em todas. Numa RTX 3060 Ti de 8 GB isso funciona, mas o
 | `modelo` | `stabilityai/stable-diffusion-xl-base-1.0` | modelo do Hugging Face (variante fp16) |
 | `variacoes` | `3` | variações por vídeo |
 | `attention_slicing` | `false` | reduz o pico de VRAM, um pouco mais lento |
-| `cpu_offload` | `false` | mantém partes do modelo na RAM e move para a GPU sob demanda; bem mais lento e usa mais RAM — último recurso |
+| `cpu_offload` | `false` | mantém na GPU só a parte ativa do modelo (codificadores → UNet → VAE) e o resto na RAM; recomendado com **uma GPU só** de 8 GB (~81 s por imagem). Com duas GPUs, deixe `false` |
 
 ## `formatos`
 

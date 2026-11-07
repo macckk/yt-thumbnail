@@ -114,7 +114,11 @@ Aumente `analise.timeout_segundos` ou use um modelo mais rápido em `analise.mod
 
 ### `CUDA out of memory`
 
-Feche outros programas que usem as GPUs (`nvidia-smi` mostra) e não rode `transcrever` junto com `gerar`: o Whisper ocupa a GPU de transcrição, que por padrão também recebe os codificadores e o VAE do SDXL (`gpu.texto_sdxl`). Com duas GPUs, confira se `gpu.imagem` e `gpu.texto_sdxl` são diferentes. Com uma GPU só, use `imagem.cpu_offload: true` (bem mais lento e usa mais RAM).
+Feche outros programas que usem as GPUs (`nvidia-smi` mostra) e não rode `transcrever` junto com `gerar`: o Whisper ocupa a GPU de transcrição, que por padrão também recebe os codificadores e o VAE do SDXL (`gpu.texto_sdxl`). Com duas GPUs, confira se `gpu.imagem` e `gpu.texto_sdxl` são diferentes. Com uma GPU só, use `imagem.cpu_offload: true` (usa mais RAM).
+
+### Geração muito lenta com uma GPU só (vários minutos por imagem)
+
+O SDXL inteiro não cabe em 8 GB e o driver está usando a RAM do sistema como VRAM. Ligue `imagem.cpu_offload: true` (de ~10 min para ~81 s por imagem numa RTX 3060 Ti).
 
 ### `CUBLAS_STATUS_INTERNAL_ERROR`
 

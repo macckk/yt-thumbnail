@@ -144,7 +144,7 @@ Implemente `BackendAnalise` (atributo `nome` e método `gerar(prompt, esquema) -
    - difusão num segundo pipeline só com o UNet e o scheduler (`output_type="latent"`) na GPU de imagem;
    - decodificação dos latentes pelo VAE em **fp32** (o VAE do SDXL gera NaN/preto em fp16), com tiling, na GPU de texto; depois `image_processor.postprocess`.
 
-   Numa GPU só (ou com `cpu_offload`), o pipeline inteiro roda em `cuda:<gpu.imagem>`. `attention_slicing` é opcional e desliga o SDPA — em testes provocou `CUBLAS_STATUS_INTERNAL_ERROR`, por isso fica desligado por padrão.
+   Com `cpu_offload`, `enable_model_cpu_offload(gpu_id=gpu.imagem)` move cada componente para a GPU só enquanto ele trabalha (modo recomendado com uma GPU só). Numa GPU só sem `cpu_offload`, o pipeline inteiro roda em `cuda:<gpu.imagem>` e transborda para a RAM compartilhada. `attention_slicing` é opcional e desliga o SDPA — em testes provocou `CUBLAS_STATUS_INTERNAL_ERROR`, por isso fica desligado por padrão.
 3. **Variações**: uma seed aleatória por variação (`torch.Generator` na GPU), salvas em `imagens.json` e no estado.
 4. **Ajuste** (`ajustar`): escala para cobrir a saída (`formatos.<tipo>.saida`) e recorte central — 1344×768 → 1280×720; 768×1344 → 1080×1920.
 
