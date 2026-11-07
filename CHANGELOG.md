@@ -4,7 +4,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
-### Fase 4 — Geração da imagem (SDXL)
+### Fase 4 — Geração da imagem (SDXL) ✅ (concluída em 2026-11-07)
 - `imagem.py`: SDXL 1.0 base fp16 na GPU de imagem, carregado uma vez por execução, VAE tiling; `attention_slicing` e `cpu_offload` opcionais.
 - Prompt dividido entre os dois codificadores do SDXL (cena no 1º; estilo do preset + cena no 2º) para não cortar nada no limite de 77 tokens.
 - Variações com seeds aleatórias salvas em `imagens.json` e no estado; ajuste por escala + recorte central para a saída (1280×720 / 1080×1920).
@@ -13,7 +13,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - SDXL dividido entre as duas GPUs de 8 GB: UNet na GPU `imagem`; codificadores de texto e VAE (fp32) na nova `gpu.texto_sdxl` (padrão: a de transcrição).
 - VAE tiling compatível com diffusers 0.42 (`pipe.vae.enable_tiling`).
 - Template de análise pede que o `prompt_imagem` comece pela composição (o fim pode ser cortado no limite de 77 tokens).
-- Validado no PC das GPUs (2× RTX 3060 Ti, 8 GB de RAM): ~52 s por imagem em 1344×768, pico de VRAM ~6,1 GB (UNet) e ~8 GB (codificadores + VAE), pico de RAM do processo 4,7 GB; imagens sem texto, claras e serenas (longo e Short). Pendente: a GPU 1 cai do barramento PCIe sob carga contínua (erros WHEA no root port), a investigar no hardware. Com uma GPU só (todas as chaves de `gpu` em `0`) a geração funciona, a ~5 min por imagem.
+- Validado no PC das GPUs (2× RTX 3060 Ti, 8 GB de RAM): ~52 s por imagem em 1344×768, pico de VRAM ~6,1 GB (UNet) e ~8 GB (codificadores + VAE), pico de RAM do processo 4,7 GB; imagens sem texto, claras e serenas (longo e Short). Problema de hardware: a GPU 1 cai do barramento PCIe sob carga contínua (erros WHEA no root port), a investigar no hardware. Com uma GPU só (todas as chaves de `gpu` em `0`) a geração funciona, mas leva de 5 a 11 min por imagem (a VRAM transborda para a RAM do sistema). Aceite fechado assim: 6 vídeos reais (4 palestras + 2 Shorts), 3 variações cada, sem texto e sem erros.
 
 ### Fase 3 — Análise e prompt (Claude) ✅ (concluída em 2026-11-05)
 - `analise/base.py`: interface `BackendAnalise`, montagem do prompt (template + preset + tipo), transcrição longa reduzida a início/meio/fim, extração e validação do JSON (esquema + tamanho do título do preset) com novas tentativas explicando o erro.

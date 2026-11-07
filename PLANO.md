@@ -280,7 +280,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/presets.md` (camada de análise), como editar o template.
 **Aceite:** `analise.json` válido para todos; títulos respeitam o tom do preset (revisar 5 exemplos reais).
 
-### Fase 4 — Geração da imagem (SDXL)
+### Fase 4 — Geração da imagem (SDXL) ✅ concluída (2026-11-07)
 **Tarefas**
 - `StableDiffusionXLPipeline` fp16 na GPU 1 (`cuda:1`), modelo carregado **uma vez** por lote.
 - Resolução nativa por tipo: 1344×768 (longo) / 768×1344 (Short); depois redimensionar/recortar para a saída configurada.
@@ -402,3 +402,4 @@ No início de cada sessão: pedir ao Claude Code para ler este `PLANO.md`, o `CH
 - [ ] Execução: o projeto roda em **outro PC** da rede (2× RTX 3060 Ti 8 GB, acesso `ssh pc-gpu`); o desenvolvimento é feito em outro PC e sincronizado pelo GitHub
 - [ ] RAM do PC das GPUs é **8 GB**: carregar SDXL (~7 GB) e Whisper (~3 GB) juntos pode estourar a memória → na Fase 8, permitir rodar as etapas em sequência (paralelismo configurável) ou aumentar a RAM para 16–32 GB
 - [ ] `claude -p` por SSH precisa de `CLAUDE_CODE_OAUTH_TOKEN` (ver `docs/solucao-de-problemas.md`)
+- [ ] GPU 1 (barramento PCIe 4) do PC das GPUs falhou em 2026-11-05 (erros WHEA no PCIe, depois sumiu do sistema). Até o hardware ser verificado, o PC roda com **uma GPU só** (todas as chaves de `gpu` em `0`, 5–11 min por imagem no SDXL, contra ~52 s com as duas). Quando voltar: `gpu.imagem: 0` (UNet) e `gpu.texto_sdxl: 1`

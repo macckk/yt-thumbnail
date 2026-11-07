@@ -28,7 +28,7 @@ O caminho pode ser trocado com `--config` ou com a variável de ambiente `YT_THU
 
 Em placas de 8 GB o SDXL inteiro não cabe numa GPU só em 1344×768. Por isso, com duas GPUs, o trabalho é dividido: o UNet (a difusão) fica na GPU `imagem`, e os codificadores de texto (~1,6 GB) e o VAE em fp32 (decodificação final) ficam na GPU `texto_sdxl`. Medido em 2× RTX 3060 Ti: pico de ~6,1 GB na GPU de imagem e ~8 GB na outra (o cache do PyTorch ocupa o que estiver livre). Não rode `transcrever` e `gerar` ao mesmo tempo.
 
-Com uma GPU só, use `0` em todas. Numa RTX 3060 Ti de 8 GB isso funciona, mas o driver do Windows passa a usar a RAM do sistema como extensão da VRAM: ~5 min por imagem (contra ~52 s com duas GPUs). `imagem.cpu_offload` é a alternativa, também lenta e com mais uso de RAM.
+Com uma GPU só, use `0` em todas. Numa RTX 3060 Ti de 8 GB isso funciona, mas o driver do Windows passa a usar a RAM do sistema como extensão da VRAM: 5 a 11 min por imagem (contra ~52 s com duas GPUs). `imagem.cpu_offload` é a alternativa, também lenta e com mais uso de RAM.
 
 ## `ytdlp`
 
