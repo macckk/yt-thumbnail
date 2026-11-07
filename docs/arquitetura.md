@@ -43,6 +43,7 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `analise/claude_code.py` | Fase 3: backend padrão (`claude -p`) |
 | `imagem.py` | Fase 4: SDXL, variações e ajuste para a saída |
 | `composicao.py` | Fase 5: título sobre as imagens (Pillow), capas e miniaturas |
+| `revisao.py` | Fase 6: backup da capa atual, página de revisão, aprovar/rejeitar |
 | `ambiente.py` | verificação do ambiente |
 | `cli.py` | comandos (Typer) |
 
@@ -209,3 +210,9 @@ Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e
   "composto_em": "2026-11-07T22:30:00+00:00"
 }
 ```
+
+## Fase 6 — Revisão
+
+- **Backup** (`baixar_original`): tenta, nesta ordem, a `thumbnail_url` do `meta.json` e `i.ytimg.com/vi/<id>/{maxresdefault,hq720,sddefault,hqdefault}.jpg`; descarta o "sem capa" do YouTube (120×90) e converte WebP/PNG para JPEG. Grava `capa_original.jpg` de forma atômica e **nunca** o sobrescreve; a URL usada fica em `dados.capa_original_url`.
+- **Página** (`preparar_revisao` / `montar_html`): HTML estático em `saida/<job>/revisao.html`, CSS embutido (claro/escuro), imagens por caminho relativo (`<video_id>/capa_N.jpg`), textos escapados. Inclui vídeos com status `capas_compostas` ou posterior; pendentes primeiro.
+- **Decisão** (`aprovar` / `rejeitar`): `aprovado` grava `dados.variacao`, `dados.capa` e `dados.decidido_em`; `rejeitado` limpa a variação. `aprovado` e `rejeitado` têm a mesma ordem, então trocar entre eles não é "regredir"; sair de `enviado`/`nao_elegivel` exige `--forcar`.

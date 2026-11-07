@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Fase 6 — Revisão (HTML) ✅ (concluída em 2026-11-07)
+- `revisao.py`: backup da capa atual em `capa_original.jpg` (baixado uma única vez, nunca sobrescrito; ignora o "sem capa" 120×90 do YouTube e converte WebP), página estática `saida/<job>/revisao.html` com selo LONGO/SHORT, capa atual, variações em tamanho real e miniatura, métricas da composição e comandos prontos para copiar.
+- Comandos `yt-thumbnail revisar [--job] [--tipo] [--nao-abrir] [--offline]`, `aprovar ID... --variacao N`, `aprovar --todos --variacao N`, `rejeitar ID...`; mudar a decisão de vídeo já enviado só com `--forcar`.
+- Docs: fluxo de revisão em `uso-cli.md` com captura de tela (`docs/img/revisao.jpg`).
+- Validado no PC das GPUs: 6 capas atuais baixadas (backup) e páginas dos dois jobs geradas; aprovar, rejeitar, `--todos` e mudança de decisão cobertos por testes e conferidos numa cópia dos dados reais.
+
 ### Fase 5 — Composição do título (Pillow) ✅ (concluída em 2026-11-07)
 - `composicao.py`: região do título pela `posicao_texto` dentro da área segura (longo evita o canto inferior direito; Short no quadrado central, acima do assunto), maior fonte que cabe em até `linhas_max` linhas com quebra equilibrada, cor escura ou clara pelo contraste WCAG, véu translúcido que sobe até o contraste chegar a 3:1, sombra suave.
 - JPEG < 2 MB (qualidade 90, baixando se precisar), miniatura de verificação 320×180 / 180×320 e `capas.json` com tamanho da fonte, contraste e avisos.

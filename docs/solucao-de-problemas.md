@@ -136,6 +136,20 @@ O SDXL (~7 GB, variante fp16) é baixado do Hugging Face para o cache (`HF_HOME`
 
 O SDXL às vezes desenha "pseudo-texto". O `negative_prompt` do preset já inclui `text, letters, words`; gere outras variações (`--forcar`) ou deixe o template de análise insistir em áreas lisas (céu, parede, névoa) do lado do título.
 
+## Revisão
+
+### Aviso `não foi possível baixar a capa atual`
+
+Sem internet ou o YouTube recusou o pedido. A página é gerada mesmo assim ("capa atual não baixada"); rode `revisar` de novo depois. O backup é obrigatório antes do envio (Fase 7).
+
+### O botão "copiar" não copia
+
+Alguns navegadores bloqueiam a área de transferência em páginas abertas como arquivo (`file://`). Selecione o comando e copie com Ctrl+C.
+
+### `está em mais de um job; use --job`
+
+O mesmo vídeo está em duas playlists configuradas. Informe qual com `--job`.
+
 ## Composição (Pillow)
 
 ### `Fonte do preset não encontrada`

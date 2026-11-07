@@ -235,14 +235,15 @@ header p {{ margin: 4px 0; color: var(--suave); }}
 .situacao.pendente {{ color: var(--pendente); }}
 .titulo-capa {{ font-size: 15px; margin: 6px 0 2px; }}
 .resumo {{ color: var(--suave); margin: 2px 0 12px; font-size: 14px; }}
-.grade {{ display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }}
+.grade {{ display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }}
 .short .grade {{ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }}
 figure {{ margin: 0; border: 1px solid var(--borda); border-radius: 10px; padding: 8px; }}
 figure.escolhida {{ border: 2px solid var(--ok); }}
 figure img.real {{ width: 100%; height: auto; display: block; border-radius: 6px; }}
 figcaption {{ font-size: 13px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }}
 .mini {{ display: flex; align-items: center; gap: 8px; color: var(--suave); font-size: 12px; }}
-.mini img {{ border-radius: 4px; display: block; }}
+.mini img {{ border-radius: 4px; display: block; max-width: 100%; height: auto; }}
 .cmd {{ display: flex; gap: 6px; align-items: stretch; }}
 .cmd code {{ flex: 1; background: var(--codigo); border-radius: 6px; padding: 4px 6px;
   font-size: 12px; overflow-wrap: anywhere; }}

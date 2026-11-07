@@ -102,6 +102,37 @@ yt-thumbnail compor
 yt-thumbnail compor --job palestras --forcar
 ```
 
+## Revisão e aprovação
+
+Nada é enviado ao YouTube sem passar por aqui.
+
+### `yt-thumbnail revisar [--job] [--tipo] [--nao-abrir] [--offline]`
+
+1. Baixa a **capa atual** de cada vídeo com capas compostas para `capa_original.jpg`. É o **backup** usado por `restaurar` (Fase 7): baixado uma única vez e nunca sobrescrito, mesmo com o comando repetido.
+2. Gera `saida/<job>/revisao.html` e abre no navegador (`--nao-abrir` só gera; `--offline` não acessa o YouTube).
+
+A página mostra, por vídeo: selo LONGO/SHORT, título do vídeo (link para o YouTube), situação (aguardando, aprovada a variação N, rejeitado), título da capa e resumo da análise, a capa atual, as variações em tamanho real e em miniatura (320×180 ou 180×320, como aparecem na busca e nas sugestões), as métricas da composição (fonte, contraste, tamanho) e, ao lado de cada variação, o comando de aprovação com um botão **copiar**. Vídeos pendentes aparecem primeiro; a variação aprovada fica com borda verde.
+
+![Página de revisão](img/revisao.jpg)
+
+Executando no PC das GPUs por SSH, use `--nao-abrir` e abra o arquivo lá, ou pela rede (a página usa caminhos relativos: copiar a pasta `saida/<job>` inteira também funciona).
+
+### `yt-thumbnail aprovar ID [ID...] --variacao N [--job] [--forcar]`
+
+Aprova a variação `N` (1, 2, 3...) dos vídeos e registra `aprovado` (com a variação e o arquivo da capa no estado). Sem `--job`, procura o vídeo em todos os jobs (se estiver em mais de um, pede `--job`).
+
+```powershell
+yt-thumbnail aprovar sFPmqrUSXlw --variacao 2
+yt-thumbnail aprovar --todos --variacao 1          # todos os pendentes de revisão
+yt-thumbnail aprovar --todos --variacao 1 --job palestras --tipo longo
+```
+
+### `yt-thumbnail rejeitar ID [ID...] [--job] [--forcar]`
+
+Rejeita as capas do vídeo: ele não será enviado. Para tentar de novo, gere outras imagens (`gerar --ids ID --forcar`) e componha (`compor --ids ID`): o vídeo volta a ficar pendente.
+
+Mudar de ideia é livre até o envio (aprovar outra variação, rejeitar um aprovado ou aprovar um rejeitado). Depois de `enviado`, só com `--forcar`. Recompor com `compor --forcar` também desfaz a decisão.
+
 ## Comandos planejados
 
-``revisar`, `aprovar`, `rejeitar`, `enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).
+`enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).

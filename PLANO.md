@@ -305,7 +305,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/presets.md` (camada de tipografia, como trocar fontes), créditos das fontes.
 **Aceite:** capas legíveis na miniatura; todas < 2 MB; layout de Short correto.
 
-### Fase 6 — Revisão (HTML)
+### Fase 6 — Revisão (HTML) ✅ concluída (2026-11-07)
 **Tarefas**
 - Baixar a capa atual de cada vídeo → `capa_original.jpg` (também é o **backup**).
 - Gerar `saida/<job>/revisao.html`: por vídeo, tipo (selo LONGO/SHORT), capa original, as 3 variações em tamanho real e em miniatura, título e resumo; o comando de aprovação pronto para copiar ao lado de cada variação.
