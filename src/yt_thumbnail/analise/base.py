@@ -141,12 +141,48 @@ def preencher(template: str, valores: dict[str, Any]) -> str:
     return padrao.sub(lambda m: str(valores[m.group(1)]), template)
 
 
+_CONECTIVOS = {"de", "da", "do", "das", "dos", "e"}
+_PREFIXO_NOME = re.compile(r"^\s*(?P<nome>[^|:?!]{3,60}?)\s+[-–—]\s+(?P<resto>\S.*)$")
+
+
+def limpar_titulo(titulo: str) -> str:
+    """Tira do título o que não é tema: sufixo do canal e nome do palestrante.
+
+    ``"Otávio Mandrá - Livre-Arbítrio: Você Está... | Espiritismo"`` →
+    ``"Livre-Arbítrio: Você Está..."``. O prefixo só sai quando parece um nome próprio
+    (2 a 6 palavras com inicial maiúscula, aceitando "de", "da", "dos"...).
+    """
+    texto = titulo.split(" | ")[0].strip() or titulo.strip()
+    m = _PREFIXO_NOME.match(texto)
+    if m:
+        palavras = m["nome"].split()
+        if 2 <= len(palavras) <= 6 and all(
+            p[0].isupper() or p.lower() in _CONECTIVOS for p in palavras
+        ):
+            texto = m["resto"].strip()
+    return texto
+
+
 def montar_prompt(
-    template: str, meta: Meta, transcricao: str, preset: Preset, limite_caracteres: int
+    template: str,
+    meta: Meta,
+    transcricao: str,
+    preset: Preset,
+    limite_caracteres: int,
+    so_titulo: bool = False,
 ) -> str:
-    """Monta o prompt a partir do template ``prompts/analise.md`` e do preset."""
+    """Monta o prompt a partir do template ``prompts/analise.md`` e do preset.
+
+    Com ``so_titulo`` (job com ``fonte_analise: titulo``), o título vai limpo (sem o nome do
+    palestrante e o sufixo do canal) e a análise se baseia só no título e na descrição.
+    """
     texto = transcricao.strip()
-    if not texto:
+    if so_titulo:
+        texto = (
+            "(sem transcrição neste job: baseie-se no título e na descrição. O tema está no "
+            "título; não use nomes de pessoas no título da capa)"
+        )
+    elif not texto:
         texto = "(vídeo sem fala transcrita: baseie-se no título e na descrição)"
     else:
         texto = truncar_transcricao(texto, limite_caracteres)
@@ -155,7 +191,7 @@ def montar_prompt(
         template,
         {
             "tipo": meta.tipo,
-            "titulo": meta.titulo,
+            "titulo": limpar_titulo(meta.titulo) if so_titulo else meta.titulo,
             "descricao": (meta.descricao or "(sem descrição)")[:2000],
             "transcricao": texto,
             "preset": preset.nome,
@@ -327,7 +363,14 @@ def analisar_job(
             resultado.erros[r.video_id] = msg
             continue
         transcricao = (pasta / "transcricao.txt").read_text(encoding="utf-8")
-        prompt = montar_prompt(template, meta, transcricao, preset, limite_caracteres)
+        prompt = montar_prompt(
+            template,
+            meta,
+            transcricao,
+            preset,
+            limite_caracteres,
+            so_titulo=info.origem == "desativada",
+        )
         try:
             analise, n = analisar_texto(backend, prompt, preset, tentativas_extras)
         except ErroBackend:

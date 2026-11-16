@@ -201,6 +201,36 @@ def test_transcrever_job_origens_e_idempotencia(tmp_path: Path) -> None:
         assert r3.feitos == {"manual1": "sem_fala"}
 
 
+def test_transcricao_desativada(tmp_path: Path) -> None:
+    def nao_chamar(*a, **k):
+        raise AssertionError("não deveria baixar nada")
+
+    with abrir_estado(tmp_path) as estado:
+        _preparar(tmp_path, estado, {"a": "longo", "b": "longo"})
+        kw = dict(
+            job="j",
+            tipos=["longo"],
+            pasta_saida=tmp_path,
+            estado=estado,
+            transcritor=FakeWhisper({}),
+            idiomas=["pt"],
+        )
+        r = transcrever_job(**kw, desativada=True, extrair=nao_chamar, baixar=nao_chamar)
+        assert r.feitos == {"a": "desativada", "b": "desativada"}
+        info = ler_info(pasta_video(tmp_path, "j", "a"))
+        assert info is not None and info.origem == "desativada" and info.caracteres == 0
+        assert estado.obter("j", "a").status == "transcrito"
+        # reativada: transcreve de verdade
+        whisper = FakeWhisper({"a": "Hoje vamos falar sobre o livre-arbítrio e o destino."})
+        r2 = transcrever_job(
+            **{**kw, "transcritor": whisper},
+            ids=["a"],
+            extrair=FakeYtDlp({}),
+            baixar=fake_baixar,
+        )
+        assert r2.feitos == {"a": "whisper"}
+
+
 def test_filtro_tipo_limite_e_erro(tmp_path: Path) -> None:
     def quebra(url: str, opcoes: dict) -> dict:
         raise RuntimeError("HTTP Error 429: Too Many Requests")

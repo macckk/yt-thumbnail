@@ -253,7 +253,8 @@ def transcrever(
     """Transcreve os vídeos listados: legenda do YouTube ou, sem ela, faster-whisper na GPU.
 
     Grava transcricao.txt e transcricao.json (origem: legenda_manual, legenda_auto, whisper
-    ou sem_fala) e registra o status `transcrito`.
+    ou sem_fala) e registra o status `transcrito`. Jobs com `fonte_analise: titulo` não
+    transcrevem (origem desativada): a análise usa só o título e a descrição.
     """
     from collections import Counter
 
@@ -296,6 +297,7 @@ def transcrever(
                     manter_audio=tc.manter_audio,
                     limite=limite,
                     ao_progredir=progresso,
+                    desativada=j.fonte_analise == "titulo",
                 )
             origens = Counter(r.feitos.values())
             detalhe = ", ".join(f"{n} {o}" for o, n in origens.most_common()) or "nenhum"

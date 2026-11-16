@@ -4,6 +4,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado
+- `fonte_analise: titulo` por job: a análise usa só o título e a descrição, sem baixar áudio nem transcrever (a etapa `transcrever` grava uma transcrição vazia de origem `desativada`). O título vai sem o nome do palestrante ("Nome - Tema") e sem o sufixo do canal ("| Espiritismo"). Reativar a transcrição faz esses vídeos serem transcritos de verdade.
+- Preset `espiritualidade`: nomes de pessoas proibidos no título da capa.
+
 ## [0.1.0] — 2026-11-16
 
 Primeira versão: da playlist do YouTube até a capa enviada, com revisão humana no meio.

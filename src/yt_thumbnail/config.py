@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from yt_thumbnail.presets import ErroPreset, Preset, carregar_preset
 
 TipoVideo = Literal["longo", "short"]
+FonteAnalise = Literal["transcricao", "titulo"]
 _APELIDO = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 _CHANNEL_ID = re.compile(r"^UC[0-9A-Za-z_-]{22}$")
 
@@ -150,6 +151,8 @@ class Job(_Modelo):
     canal: str
     preset: str
     tipos: list[TipoVideo] = Field(default_factory=lambda: ["longo"])
+    fonte_analise: FonteAnalise = "transcricao"
+    """``titulo``: a análise usa só o título e a descrição (sem baixar áudio nem transcrever)."""
 
     @field_validator("nome")
     @classmethod

@@ -16,6 +16,7 @@ from yt_thumbnail.analise.base import (
     analisar_job,
     extrair_json,
     ler_analise,
+    limpar_titulo,
     montar_prompt,
     preencher,
     truncar_transcricao,
@@ -233,3 +234,31 @@ def test_claude_ausente(monkeypatch) -> None:
         ClaudeCodeBackend().comando({})
     with pytest.raises(ErroBackend, match="desconhecido"):
         criar_backend("ollama")
+
+
+@pytest.mark.parametrize(
+    ("titulo", "esperado"),
+    [
+        (
+            "Otávio Mandrá - Livre-Arbítrio: Você Está Construindo o Seu Próprio Destino? "
+            "| Espiritismo",
+            "Livre-Arbítrio: Você Está Construindo o Seu Próprio Destino?",
+        ),
+        ("Célia de Araújo – Todos Somos Chamados", "Todos Somos Chamados"),
+        ("A cura começa - parte 2", "A cura começa - parte 2"),  # não é nome próprio
+        ("Perdão | Espiritismo", "Perdão"),
+        ("Livre-arbítrio e destino", "Livre-arbítrio e destino"),
+    ],
+)
+def test_limpar_titulo(titulo: str, esperado: str) -> None:
+    assert limpar_titulo(titulo) == esperado
+
+
+def test_montar_prompt_so_titulo(preset) -> None:
+    meta = _meta()
+    meta.titulo = "Otávio Mandrá - Livre-Arbítrio: Seu Destino | Espiritismo"
+    p = montar_prompt(TEMPLATE, meta, "", preset, 20000, so_titulo=True)
+    assert "Livre-Arbítrio: Seu Destino" in p
+    assert "Mandrá" not in p and "| Espiritismo" not in p
+    assert "sem transcrição neste job" in p
+    assert "Reflexão espírita" in p  # descrição continua indo

@@ -62,3 +62,4 @@ jobs:
     canal: espiritual-principal
     preset: espiritualidade
     tipos: [longo]             # adicione `short` para também gerar capas de Shorts
+    fonte_analise: transcricao # ou `titulo`: usa só título e descrição (bem mais rápido)

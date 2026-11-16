@@ -23,6 +23,7 @@ def test_exemplo_valido(projeto: Path) -> None:
     assert cfg.jobs[0].tipos == ["longo"]
     assert cfg.canais["espiritual-principal"].shorts_capa_personalizada is True
     assert cfg.formatos.short.geracao == (768, 1344)
+    assert cfg.jobs[0].fonte_analise == "transcricao"
     assert cfg.pasta_saida == projeto.resolve() / "saida"
     assert "espiritualidade" in cfg.validar_presets()
 

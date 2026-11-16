@@ -29,7 +29,8 @@ from pydantic import BaseModel, ValidationError
 from yt_thumbnail.estado import ORDEM, Estado
 from yt_thumbnail.playlist import Extrator, ler_meta, pasta_video, url_video
 
-Origem = Literal["legenda_manual", "legenda_auto", "whisper", "sem_fala"]
+Origem = Literal["legenda_manual", "legenda_auto", "whisper", "sem_fala", "desativada"]
+"""``desativada``: job com ``fonte_analise: titulo`` (transcrição vazia, de propósito)."""
 
 MIN_CARACTERES_FALA = 20
 """Abaixo disso a transcrição é considerada vazia (ex.: só "[Música]")."""
@@ -406,11 +407,16 @@ def transcrever_job(
     extrair: Extrator | None = None,
     baixar: Callable[[str, Path, dict[str, Any]], Path] | None = None,
     ao_progredir: Callable[[str, int, int], None] | None = None,
+    desativada: bool = False,
 ) -> ResultadoTranscricao:
     """Transcreve os vídeos listados do job cujo tipo está em ``tipos``.
 
     Idempotente: pula vídeos com ``transcricao.txt``/``.json`` válidos, a menos que ``forcar``
     ou ``forcar_whisper`` (este refaz só pelo whisper). Erros ficam no estado.
+
+    Com ``desativada`` (job com ``fonte_analise: titulo``), não baixa nada: grava uma
+    transcrição vazia de origem ``desativada`` e a análise usa só o título e a descrição.
+    Se a transcrição for reativada depois, esses vídeos voltam a ser transcritos.
     """
     tipos = set(tipos)
     filtro = set(ids) if ids else None
@@ -425,6 +431,8 @@ def transcrever_job(
     for r in candidatos:
         pasta = pasta_video(pasta_saida, job, r.video_id)
         existente = None if (forcar or forcar_whisper) else ler_info(pasta)
+        if existente is not None and existente.origem == "desativada" and not desativada:
+            existente = None  # transcrição reativada: agora transcreve de verdade
         if existente is not None:
             resultado.existentes.append(r.video_id)
             if ORDEM[r.status] < ORDEM["transcrito"]:
@@ -441,6 +449,17 @@ def transcrever_job(
             msg = "meta.json ausente; rode `yt-thumbnail listar` antes"
             estado.marcar_erro(job, r.video_id, "transcrever", msg)
             resultado.erros[r.video_id] = msg
+            continue
+        if desativada:
+            gravar_transcricao(pasta, "", "desativada", None)
+            estado.registrar(
+                job,
+                r.video_id,
+                "transcrito",
+                dados={"transcricao_origem": "desativada"},
+                permitir_regredir=forcar or forcar_whisper,
+            )
+            resultado.feitos[r.video_id] = "desativada"
             continue
         try:
             info = transcrever_video(

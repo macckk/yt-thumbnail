@@ -104,6 +104,7 @@ Lista de associações playlist → canal → preset.
 | `canal` | sim | apelido definido em `canais` |
 | `preset` | sim | nome de um arquivo em `presets/` (sem `.yaml`) |
 | `tipos` | não | `[longo]` (padrão) ou `[longo, short]` |
+| `fonte_analise` | não | `transcricao` (padrão) ou `titulo`: a análise usa só o título e a descrição, sem baixar áudio nem transcrever. Bom para vídeos longos com título descritivo (ex.: palestras): corta ~7 min por vídeo. O nome do palestrante ("Nome - Tema") e o sufixo do canal ("\| Espiritismo") saem do título antes da análise |
 
 Todos os vídeos da playlist são listados e classificados, mas só os tipos em `tipos` seguem para as próximas etapas. Os outros aparecem como "fora do job" no `yt-thumbnail listar`.
 

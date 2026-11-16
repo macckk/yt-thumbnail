@@ -56,6 +56,8 @@ Transcreve os vídeos já listados cujo tipo está em `tipos` do job:
 
 Grava `transcricao.txt` e `transcricao.json` e registra o status `transcrito`.
 
+Em jobs com `fonte_analise: titulo` (ver [configuracao.md](configuracao.md#jobs)), não baixa nada: registra uma transcrição vazia de origem `desativada` na hora, e a análise usa só o título e a descrição.
+
 | Opção | Descrição |
 |---|---|
 | `--tipo` | só `longo` ou só `short` |
