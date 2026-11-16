@@ -51,7 +51,7 @@ def principal(
 ) -> None:
     """Gera capas para playlists do YouTube.
 
-    Fluxo: transcrição → Claude → SDXL → Pillow → revisão → envio.
+    Fluxo: transcrição > Claude > SDXL > Pillow > revisão > envio.
     """
 
 
@@ -772,7 +772,7 @@ def auth(
             console.print(f"channel_id de `{canal}` gravado em {arquivo}.")
         else:
             console.print(
-                f"[yellow]Preencha à mão[/] em {arquivo}: canais → {canal} → "
+                f"[yellow]Preencha à mão[/] em {arquivo}: canais > {canal} > "
                 f"channel_id: {obtido.channel_id}"
             )
 
@@ -939,6 +939,149 @@ def restaurar(
             else:
                 console.print(f"[green]restaurada[/] a capa original de {nome_job}/{vid}")
     if falhou:
+        raise typer.Exit(1)
+
+
+@app.command()
+def tudo(
+    job: OpcaoJob = None,
+    tipo: OpcaoTipo = None,
+    limite: OpcaoLimite = None,
+    ate: Annotated[
+        str,
+        typer.Option(
+            "--ate",
+            help="Última etapa: listar, transcrever, analisar, gerar, compor ou revisar.",
+        ),
+    ] = "revisar",
+    abrir: Annotated[
+        bool, typer.Option("--abrir/--nao-abrir", help="Abre a página de revisão no fim.")
+    ] = False,
+    config: OpcaoConfig = None,
+) -> None:
+    """Roda listar, transcrever, analisar, gerar, compor e revisar, e para na revisão.
+
+    Cada etapa só processa o que falta: rodar de novo continua de onde parou. Erros de um
+    vídeo não param o fluxo (ficam no estado e no resumo). O envio é sempre explícito
+    (`enviar --aprovados`). Log em saida/logs/tudo-AAAAMMDD-HHMMSS.log.
+    """
+    import time
+
+    from rich.markup import escape
+    from rich.table import Table
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.orquestracao import (
+        ETAPAS,
+        ResultadoEtapa,
+        arquivo_log,
+        liberar_memoria,
+        resumir,
+    )
+
+    if ate not in ETAPAS:
+        raise typer.BadParameter(f"--ate deve ser uma de: {', '.join(ETAPAS)}")
+    cfg = _carregar(config)
+    jobs = _jobs_selecionados(cfg, job)
+    for j in jobs:
+        _tipos_do_job(j, tipo)  # valida --tipo antes de começar
+    etapas = ETAPAS[: ETAPAS.index(ate) + 1]
+    comuns = {"job": job, "config": config}
+    chamadas = {
+        "listar": lambda: listar(**comuns, ids=None, forcar=False),
+        "transcrever": lambda: transcrever(
+            **comuns, ids=None, tipo=tipo, forcar=False, forcar_whisper=False, limite=limite
+        ),
+        "analisar": lambda: analisar(**comuns, ids=None, tipo=tipo, forcar=False, limite=limite),
+        "gerar": lambda: gerar(
+            **comuns, ids=None, tipo=tipo, variacoes=None, forcar=False, limite=limite
+        ),
+        "compor": lambda: compor(**comuns, ids=None, tipo=tipo, forcar=False, limite=limite),
+        "revisar": lambda: revisar(**comuns, tipo=tipo, abrir=abrir, offline=False),
+    }
+
+    gravando = console.record
+    console.record = True
+    inicio_geral = time.perf_counter()
+    console.rule(f"yt-thumbnail tudo — {', '.join(j.nome for j in jobs)}")
+    resultados: list[ResultadoEtapa] = []
+    try:
+        for nome in etapas:
+            console.rule(f"[bold]{nome}[/]")
+            t0 = time.perf_counter()
+            try:
+                chamadas[nome]()
+            except typer.Exit as e:
+                codigo = getattr(e, "exit_code", 1)
+                resultados.append(
+                    ResultadoEtapa(nome, False, time.perf_counter() - t0, "com erros")
+                )
+                if codigo not in (0, 1):  # erro de configuração/uso: não adianta seguir
+                    raise
+            except Exception as e:  # noqa: BLE001 - uma etapa quebrada não perde o log
+                console.print(f"[red]Falha inesperada em {nome}:[/] {escape(repr(e))}")
+                resultados.append(ResultadoEtapa(nome, False, time.perf_counter() - t0, repr(e)))
+            else:
+                resultados.append(ResultadoEtapa(nome, True, time.perf_counter() - t0))
+            finally:
+                liberar_memoria()
+
+        console.rule("[bold]resumo[/]")
+        etapas_tab = Table("Etapa", "Resultado", "Tempo")
+        for r in resultados:
+            situacao = "[green]OK[/]" if r.ok else f"[yellow]{escape(r.detalhe)}[/]"
+            etapas_tab.add_row(r.nome, situacao, _duracao(r.segundos))
+        console.print(etapas_tab)
+
+        houve_erro = False
+        with abrir_estado(cfg.pasta_saida) as estado:
+            jobs_tab = Table(
+                "Job",
+                "Vídeos",
+                "Na revisão",
+                "Pendentes",
+                "Aprovados",
+                "Enviados",
+                "Não elegíveis",
+                "Com erro",
+            )
+            resumos = []
+            for j in jobs:
+                tipos = set(_tipos_do_job(j, tipo))
+                rs = resumir(estado, j.nome, tipos)
+                resumos.append(rs)
+                jobs_tab.add_row(
+                    j.nome,
+                    str(rs.total),
+                    str(rs.chegaram_a_revisao),
+                    str(rs.pendentes_revisao),
+                    str(rs.aprovados),
+                    str(rs.por_status["enviado"]),
+                    str(len(rs.nao_elegiveis)),
+                    str(len(rs.erros)),
+                )
+            console.print(jobs_tab)
+            for rs in resumos:
+                for vid, (etapa, msg) in sorted(rs.erros.items()):
+                    houve_erro = True
+                    console.print(f"  [red]erro[/] {rs.job}/{vid} ({etapa}): {escape(msg)}")
+        pendentes = sum(r.pendentes_revisao for r in resumos)
+        console.print(
+            f"Tempo total: {_duracao(time.perf_counter() - inicio_geral)}. "
+            + (
+                f"{pendentes} vídeo(s) aguardando revisão: abra saida/<job>/revisao.html e use "
+                "`aprovar`; depois `enviar --aprovados --dry-run`."
+                if pendentes
+                else "Nenhum vídeo aguardando revisão."
+            )
+        )
+    finally:
+        log = arquivo_log(cfg.pasta_saida)
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text(console.export_text(clear=True), encoding="utf-8")
+        console.record = gravando
+        console.print(f"Log: {log}")
+    if houve_erro or not all(r.ok for r in resultados):
         raise typer.Exit(1)
 
 
