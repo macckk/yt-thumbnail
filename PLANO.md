@@ -315,7 +315,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/uso-cli.md` (fluxo de revisão) + captura de tela em `docs/img/`.
 **Aceite:** aprovar/rejeitar funciona e o estado reflete a escolha.
 
-### Fase 7 — Autenticação multicanal e envio
+### Fase 7 — Autenticação multicanal e envio ✅ concluída (2026-11-16)
 **Tarefas**
 - `yt-thumbnail auth --canal <apelido>` e `yt-thumbnail canais` (seção 4).
 - OAuth Desktop (`InstalledAppFlow`), escopo `youtube.upload` (ou `youtube.force-ssl`).

@@ -4,11 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
-### Fase 7 — Autenticação multicanal e envio (em validação)
+### Fase 7 — Autenticação multicanal e envio ✅ (concluída em 2026-11-16)
 - `youtube_api.py`: OAuth "App para computador" com `youtube.upload` + `youtube.readonly`, um token por canal em `secrets/tokens/<channel_id>.json`, renovação automática e aviso de login vencido (modo Teste: 7 dias).
 - Envio só de aprovados, conferindo o canal do vídeo e exigindo o backup da capa atual; Shorts de canais sem capa própria viram `nao_elegivel`; pausa aleatória entre envios, novas tentativas em 429/5xx, cota esgotada para o lote; `envio.json` com histórico.
 - Comandos `auth --canal`, `canais`, `enviar --aprovados [--dry-run]`, `restaurar ID`; `auth` preenche o `channel_id` vazio no `config.yaml`.
 - Docs: `google-oauth.md` (Google Cloud passo a passo, login, Teste × Produção, cota) e `shorts.md`.
+- Validado com o canal real: login OAuth no PC das GPUs (channel_id preenchido sozinho; os 341 vídeos das playlists são do canal), `--dry-run` mostrando só o aprovado e primeiro envio real (`5by3mocX5_E`, variação 1) confirmado no YouTube. `restaurar` e o caso dos Shorts `nao_elegivel` validados por testes automatizados (o autor optou por não reverter a capa enviada).
 
 ### Fase 6 — Revisão (HTML) ✅ (concluída em 2026-11-07)
 - `revisao.py`: backup da capa atual em `capa_original.jpg` (baixado uma única vez, nunca sobrescrito; ignora o "sem capa" 120×90 do YouTube e converte WebP), página estática `saida/<job>/revisao.html` com selo LONGO/SHORT, capa atual, variações em tamanho real e miniatura, métricas da composição e comandos prontos para copiar.
