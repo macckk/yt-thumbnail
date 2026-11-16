@@ -4,7 +4,7 @@ O yt-thumbnail gera capas também para Shorts (1080×1920, título no quadrado c
 
 ## Quem pode trocar a capa de um Short
 
-O YouTube só aceita capa personalizada em Shorts para alguns canais (em geral, os do **Programa de Parcerias do YouTube**, YPP). Para os demais, a API responde **403** e a capa do Short continua sendo um quadro do vídeo escolhido no app do YouTube.
+O YouTube aceita capa personalizada em Shorts, mas a liberação depende do canal (conta verificada e recursos intermediários ativos; a regra já mudou algumas vezes). Se o canal não puder, a API responde **403** e a capa do Short continua sendo um quadro do vídeo escolhido no app do YouTube — o yt-thumbnail marca o vídeo como `nao_elegivel`, sem tratar como erro.
 
 Por isso cada canal tem, no `config.yaml`:
 
@@ -12,15 +12,15 @@ Por isso cada canal tem, no `config.yaml`:
 canais:
   espiritual-principal:
     channel_id: UC...
-    shorts_capa_personalizada: false   # true só se o canal pode trocar a capa de Shorts
+    shorts_capa_personalizada: true    # false para nem tentar enviar capa de Short
 ```
 
 | `shorts_capa_personalizada` | O que `enviar` faz com um Short aprovado |
 |---|---|
-| `false` (padrão) | não tenta enviar; marca `nao_elegivel` e lista no resumo (não é erro) |
-| `true` | envia; se a API responder 403, marca `nao_elegivel` com a mensagem da API |
+| `true` (padrão) | envia; se a API responder 403, marca `nao_elegivel` com a mensagem da API |
+| `false` | não tenta enviar; marca `nao_elegivel` e lista no resumo (não é erro) |
 
-## Vale a pena gerar capas de Shorts?
+## Para não gerar capas de Shorts
 
 Mesmo sem poder enviar, a capa gerada serve de referência para escolher o quadro no app ou para reaproveitar em outras redes. Para não gerar, deixe `short` fora de `tipos` no job:
 

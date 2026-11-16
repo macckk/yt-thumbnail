@@ -15,7 +15,7 @@ from pathlib import Path
 
 from yt_thumbnail.presets import ErroPreset, carregar_preset, listar_presets
 
-GPUS_ESPERADAS = 2
+GPUS_RECOMENDADAS = 2
 
 
 @dataclass
@@ -83,9 +83,10 @@ def verificar_gpus() -> list[Item]:
         itens.append(
             Item(
                 "Quantidade de GPUs",
-                n >= GPUS_ESPERADAS,
-                f"{n} encontrada(s), {GPUS_ESPERADAS} esperadas",
-                "Com 1 GPU, use o mesmo índice em gpu.transcricao e gpu.imagem (mais lento).",
+                n >= 1,
+                f"{n} encontrada(s)"
+                + (f" (recomendado: {GPUS_RECOMENDADAS})" if 0 < n < GPUS_RECOMENDADAS else ""),
+                "Com 1 GPU: todas as chaves de `gpu` em 0 e imagem.cpu_offload: true.",
             )
         )
         return itens

@@ -1,0 +1,21 @@
+name: Ideia ou preset
+description: Sugira uma melhoria, um novo preset ou um ajuste na documentação
+labels: [melhoria]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema isso resolve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: Como você imagina que funcione (comando, chave do config, preset...)
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas que você considerou

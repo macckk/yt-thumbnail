@@ -129,7 +129,7 @@ class Canal(_Modelo):
     """Um canal próprio do usuário (um token OAuth por canal)."""
 
     channel_id: str | None = None
-    shorts_capa_personalizada: bool = False
+    shorts_capa_personalizada: bool = True
 
     @field_validator("channel_id")
     @classmethod

@@ -1,0 +1,43 @@
+name: Problema
+description: Algo não funcionou como a documentação diz
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar! **Não cole** o conteúdo de `client_secret.json`, tokens, `config.yaml` completo ou IDs de canal/playlist que você não queira públicos.
+        Antes, veja [docs/solucao-de-problemas.md](https://github.com/macckk/yt-thumbnail/blob/main/docs/solucao-de-problemas.md).
+  - type: input
+    id: comando
+    attributes:
+      label: Comando
+      description: O comando que você rodou
+      placeholder: yt-thumbnail gerar --job meditacoes --limite 1
+    validations:
+      required: true
+  - type: textarea
+    id: aconteceu
+    attributes:
+      label: O que aconteceu
+      description: Mensagem de erro e o trecho do log (`saida/logs/`), se houver
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que você esperava
+    validations:
+      required: true
+  - type: textarea
+    id: ambiente
+    attributes:
+      label: Saída do `yt-thumbnail ambiente`
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: versao
+    attributes:
+      label: Versão
+      description: "`yt-thumbnail --version` ou o commit (`git rev-parse --short HEAD`)"

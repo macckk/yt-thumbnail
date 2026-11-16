@@ -43,7 +43,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cu128
 pip install -e ".[gpu,dev]"
 ```
 
-Confira: `python -c "import torch; print(torch.cuda.is_available(), torch.cuda.device_count())"` → `True 2`.
+Confira: `python -c "import torch; print(torch.cuda.is_available(), torch.cuda.device_count())"` → `True 1` (ou `True 2` com duas placas).
 
 ## 5. Bibliotecas CUDA do faster-whisper
 
@@ -80,7 +80,6 @@ Se o pipeline for rodar **por SSH** (ver abaixo), configure também um token de 
 ## 7. Fontes
 
 ```powershell
-pip install fonttools
 python scripts/baixar_fontes.py
 ```
 
@@ -105,7 +104,7 @@ yt-thumbnail validar
 yt-thumbnail ambiente
 ```
 
-Todos os itens devem aparecer como **OK** (2 GPUs, CUDA, FFmpeg, yt-dlp, Claude Code e fontes). O mesmo teste existe como script: `python scripts/check_env.py`.
+Todos os itens devem aparecer como **OK** (GPU, CUDA, FFmpeg, yt-dlp, Claude Code e fontes). O mesmo teste existe como script: `python scripts/check_env.py`.
 
 ## Desenvolver num PC e executar em outro
 

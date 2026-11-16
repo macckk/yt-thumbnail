@@ -155,7 +155,7 @@ Para cada vídeo aprovado, nesta ordem:
 
 1. o canal do vídeo precisa ser o canal do job (senão: **pulado**);
 2. o backup `capa_original.jpg` precisa existir (senão: **pulado** — rode `revisar`);
-3. Short em canal com `shorts_capa_personalizada: false` → **não elegível** (ver [shorts.md](shorts.md));
+3. Short em canal com `shorts_capa_personalizada: false` (ou que a API recusa com 403) → **não elegível** (ver [shorts.md](shorts.md));
 4. envio, com pausa aleatória de `envio.pausa_segundos` entre vídeos e novas tentativas em 429/5xx.
 
 Depois do envio: status `enviado` e `envio.json` na pasta do vídeo (data, variação, resposta da API e histórico). Cota esgotada para o lote (continue no dia seguinte; ver [google-oauth.md](google-oauth.md#4-cota-da-api)).

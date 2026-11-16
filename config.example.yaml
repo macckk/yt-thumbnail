@@ -10,7 +10,7 @@ caminhos:
 
 gpu:
   transcricao: 0               # índice da GPU para o faster-whisper
-  imagem: 1                    # índice da GPU para o SDXL (UNet + VAE)
+  imagem: 0                    # índice da GPU para o SDXL (UNet + VAE); com 2 GPUs: 1
   texto_sdxl: null             # GPU dos codificadores de texto do SDXL (~1,6 GB); null = a de transcrição
 
 ytdlp:
@@ -38,7 +38,7 @@ imagem:
   modelo: stabilityai/stable-diffusion-xl-base-1.0
   variacoes: 3
   attention_slicing: false     # true se faltar VRAM (um pouco mais lento)
-  cpu_offload: false           # true com uma GPU só de 8 GB (só a parte ativa fica na GPU; usa bem mais RAM)
+  cpu_offload: true            # uma GPU só de 8 GB: só a parte ativa fica na GPU; com 2 GPUs use false
 
 formatos:
   longo:
@@ -54,7 +54,7 @@ envio:
 canais:
   espiritual-principal:
     channel_id: null           # preenchido pelo `yt-thumbnail auth --canal espiritual-principal`
-    shorts_capa_personalizada: false  # true só para canais no Programa de Parcerias (YPP)
+    shorts_capa_personalizada: true   # false se o canal não puder trocar a capa de Shorts
 
 jobs:
   - nome: meditacoes

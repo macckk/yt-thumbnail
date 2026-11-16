@@ -397,7 +397,7 @@ No início de cada sessão: pedir ao Claude Code para ler este `PLANO.md`, o `CH
 - [x] Licença: GNU GPL v3.0
 - [x] Nome: **yt-thumbnail**
 - [x] Símbolos religiosos: sempre neutros
-- [x] Programa de Parcerias: nenhum canal está → sem envio de capa de Short por enquanto
+- [x] Capa de Shorts: os canais aceitam capa personalizada em Shorts (confirmado em 2026-11-16) → `shorts_capa_personalizada: true` por padrão; 403 continua virando `nao_elegivel`
 
 - [ ] Execução: o projeto roda em **outro PC** da rede (2× RTX 3060 Ti 8 GB, acesso `ssh pc-gpu`); o desenvolvimento é feito em outro PC e sincronizado pelo GitHub
 - [ ] RAM do PC das GPUs é **8 GB**: carregar SDXL (~7 GB) e Whisper (~3 GB) juntos pode estourar a memória → na Fase 8, permitir rodar as etapas em sequência (paralelismo configurável) ou aumentar a RAM para 16–32 GB

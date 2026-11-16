@@ -91,7 +91,7 @@ Mapa `apelido → canal`. O apelido usa letras minúsculas, números, `-` e `_`.
 | Chave | Padrão | Descrição |
 |---|---|---|
 | `channel_id` | `null` | ID do canal (`UC...`, 24 caracteres); preenchido pelo `yt-thumbnail auth` |
-| `shorts_capa_personalizada` | `false` | `true` só para canais no Programa de Parcerias (ver `docs/shorts.md`) |
+| `shorts_capa_personalizada` | `true` | envia capa também para Shorts; `false` pula os Shorts no envio (ver `docs/shorts.md`) |
 
 ## `jobs`
 

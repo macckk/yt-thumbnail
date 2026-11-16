@@ -36,4 +36,4 @@ Veja [docs/presets.md](docs/presets.md). Presets novos são uma ótima primeira 
 
 ## Shorts
 
-O envio de capas de Shorts precisa de um canal no Programa de Parcerias do YouTube; se você tiver um, testes e relatos ajudam muito.
+A liberação de capa personalizada em Shorts depende do canal e o YouTube já mudou essa regra algumas vezes; relatos de 403 (ou de sucesso) em canais diferentes ajudam muito.

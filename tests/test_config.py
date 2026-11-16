@@ -21,7 +21,7 @@ def test_exemplo_valido(projeto: Path) -> None:
     cfg = carregar_config(projeto / "config.yaml")
     assert [j.nome for j in cfg.jobs] == ["meditacoes"]
     assert cfg.jobs[0].tipos == ["longo"]
-    assert cfg.canais["espiritual-principal"].shorts_capa_personalizada is False
+    assert cfg.canais["espiritual-principal"].shorts_capa_personalizada is True
     assert cfg.formatos.short.geracao == (768, 1344)
     assert cfg.pasta_saida == projeto.resolve() / "saida"
     assert "espiritualidade" in cfg.validar_presets()

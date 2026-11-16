@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "yt-thumbnail"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Gerador automático de capas para playlists do YouTube (transcrição + Claude + SDXL local + Pillow)."
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -31,6 +31,8 @@ dependencies = [
     "pyyaml>=6.0",
     "typer>=0.12",
     "rich>=13.7",
+    # fonttools: instancia as fontes variáveis em scripts/baixar_fontes.py
+    "fonttools>=4.50",
 ]
 
 [project.optional-dependencies]
