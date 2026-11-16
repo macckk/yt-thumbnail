@@ -48,15 +48,14 @@ Tempos medidos com uma RTX 3060 Ti: ~75 s por imagem no SDXL e cerca de 30 minut
    ```
 2. **Configure** a playlist e o canal: `copy config.example.yaml config.yaml` e edite. Veja [docs/configuracao.md](docs/configuracao.md); para conferir, use `yt-thumbnail validar`.
 3. **Crie o seu OAuth client** no Google Cloud, salve-o em `secrets/client_secret.json` e entre no canal com `yt-thumbnail auth --canal <apelido>`. O passo a passo está em [docs/google-oauth.md](docs/google-oauth.md).
-4. **Gere as capas**: `yt-thumbnail tudo --limite 2` roda da playlist até a revisão; depois abra `saida\<job>\revisao.html` no navegador (ou use `--abrir`).
-5. **Aprove e envie**: `yt-thumbnail aprovar <id> --variacao 2`, depois `yt-thumbnail enviar --aprovados --dry-run` e, se estiver tudo certo, `yt-thumbnail enviar --aprovados`.
+4. **Gere as capas**: `yt-thumbnail tudo --limite 2` roda da playlist até a revisão; depois rode `yt-thumbnail revisar --servir` para abrir a página de revisão com botões de aprovar.
+5. **Aprove e envie**: clique em **Aprovar esta** na capa escolhida (ou use `yt-thumbnail aprovar <id> --variacao 2`), depois `yt-thumbnail enviar --aprovados --dry-run` e, se estiver tudo certo, `yt-thumbnail enviar --aprovados`.
 
 ## Fluxo do dia a dia
 
 ```powershell
 yt-thumbnail tudo                               # da playlist até a revisão (só o que falta)
-# abra saida\<job>\revisao.html e escolha as capas:
-yt-thumbnail aprovar <id> --variacao 2          # ou: aprovar --todos --variacao 1
+yt-thumbnail revisar --servir                   # página com botões: aprove/rejeite, depois Ctrl+C
 yt-thumbnail enviar --aprovados --dry-run       # confira
 yt-thumbnail enviar --aprovados                 # envia ao YouTube
 ```

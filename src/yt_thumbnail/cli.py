@@ -581,13 +581,25 @@ def revisar(
             "--historico", help="Inclui os já aprovados, rejeitados e enviados na página."
         ),
     ] = False,
+    servir: Annotated[
+        bool,
+        typer.Option(
+            "--servir",
+            help="Abre a página por um servidor local com botões de aprovar/rejeitar "
+            "(Ctrl+C encerra).",
+        ),
+    ] = False,
+    porta: Annotated[
+        int, typer.Option("--porta", min=0, max=65535, help="Porta do --servir.")
+    ] = 8765,
     config: OpcaoConfig = None,
 ) -> None:
     """Gera a página de revisão (saida/<job>/revisao.html) e baixa a capa atual (backup).
 
     A página mostra só os vídeos aguardando decisão; `aprovar` e `rejeitar` a atualizam
-    sozinhos. A capa atual de cada vídeo vai para capa_original.jpg uma única vez: ela é o
-    backup que `restaurar` usa e nunca é sobrescrita.
+    sozinhos. Com --servir, a página ganha botões que aprovam e rejeitam com um clique
+    (servidor só em 127.0.0.1). A capa atual de cada vídeo vai para capa_original.jpg uma
+    única vez: ela é o backup que `restaurar` usa e nunca é sobrescrita.
     """
     import webbrowser
 
@@ -598,8 +610,9 @@ def revisar(
 
     cfg = _carregar(config)
     paginas = []
+    selecionados = _jobs_selecionados(cfg, job)
     with abrir_estado(cfg.pasta_saida) as estado:
-        for j in _jobs_selecionados(cfg, job):
+        for j in selecionados:
             tipos = _tipos_do_job(j, tipo)
             with console.status(f"[bold]{j.nome}[/]: baixando capas atuais e montando a página..."):
                 r = preparar_revisao(
@@ -620,9 +633,48 @@ def revisar(
             if r.pagina is not None:
                 console.print(f"  página: {r.pagina.resolve()}")
                 paginas.append(r.pagina)
+    if servir:
+        _servir_revisao(cfg, {j.nome: _tipos_do_job(j, tipo) for j in selecionados}, porta, abrir)
+        return
     if abrir:
         for p in paginas:
             webbrowser.open(p.resolve().as_uri())
+
+
+def _servir_revisao(
+    cfg: Config, tipos_por_job: dict[str, list[str]], porta: int, abrir: bool
+) -> None:
+    import webbrowser
+
+    from rich.markup import escape
+
+    from yt_thumbnail.servidor import ServidorRevisao
+
+    try:
+        servidor = ServidorRevisao(
+            cfg.pasta_saida,
+            tipos_por_job,
+            porta,
+            ao_decidir=lambda msg: console.print(f"  {escape(msg)}"),
+        )
+    except OSError as e:
+        console.print(
+            f"[red]Erro:[/] não foi possível usar a porta {porta} ({e}). "
+            "Outra revisão já está aberta? Feche-a ou use --porta."
+        )
+        raise typer.Exit(1) from e
+    with servidor:
+        console.print(
+            f"\n[bold]Revisão aberta em {servidor.url()}[/] — aprove e rejeite pelos botões "
+            "da página.\nDeixe esta janela aberta enquanto revisa; [bold]Ctrl+C[/] encerra."
+        )
+        if abrir:
+            for nome in tipos_por_job:
+                webbrowser.open(servidor.url(nome))
+        try:
+            servidor.serve_forever()
+        except KeyboardInterrupt:
+            console.print("Revisão encerrada. Próximo passo: `enviar --aprovados --dry-run`.")
 
 
 def _atualizar_paginas(cfg: Config, estado, jobs: Iterable[str]) -> None:  # noqa: ANN001
@@ -1111,8 +1163,8 @@ def tudo(
         console.print(
             f"Tempo total: {_duracao(time.perf_counter() - inicio_geral)}. "
             + (
-                f"{pendentes} vídeo(s) aguardando revisão: abra saida/<job>/revisao.html e use "
-                "`aprovar`; depois `enviar --aprovados --dry-run`."
+                f"{pendentes} vídeo(s) aguardando revisão: rode `revisar --servir` e aprove "
+                "pelos botões da página; depois `enviar --aprovados --dry-run`."
                 if pendentes
                 else "Nenhum vídeo aguardando revisão."
             )

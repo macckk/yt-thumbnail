@@ -5,7 +5,9 @@
   **nunca** sobrescrita, porque também é o backup usado por ``restaurar`` (Fase 7): depois do
   envio, a capa pública passa a ser a nossa.
 - ``saida/<job>/revisao.html``: página estática com, por vídeo, a capa original, as variações
-  em tamanho real e em miniatura e o comando de aprovação pronto para copiar.
+  em tamanho real e em miniatura e o comando de aprovação pronto para copiar. Servida por
+  ``revisar --servir`` (ver :mod:`yt_thumbnail.servidor`), a página troca os comandos por
+  botões que aprovam e rejeitam direto.
 - :func:`aprovar` / :func:`rejeitar`: registram a escolha no estado.
 """
 
@@ -261,21 +263,85 @@ button:hover {{ border-color: var(--destaque); }}
 .short .sem-original {{ aspect-ratio: 9 / 16; }}
 .rejeitar {{ margin-top: 12px; }}
 .vazio {{ color: var(--suave); }}
+.acao, .so-servido {{ display: none; }}
+body.servido .acao {{ display: inline-block; }}
+body.servido .so-servido {{ display: block; }}
+body.servido .cmd, body.servido .so-arquivo {{ display: none; }}
+button.acao {{ font-size: 14px; padding: 6px 14px; font-weight: 600; }}
+button.aprovar {{ background: var(--ok); color: #fff; border-color: var(--ok); }}
+button.rejeitar-btn {{ color: var(--nao); }}
+button:disabled {{ opacity: .5; cursor: wait; }}
+.saindo {{ opacity: .3; transition: opacity .3s; }}
+#aviso {{ position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 9;
+  background: var(--texto); color: var(--cartao); padding: 8px 16px; border-radius: 8px;
+  font-size: 14px; display: none; max-width: calc(100% - 32px); }}
 </style>
 </head>
-<body>
+<body data-job="{_e(job)}">
 <header>
   <h1>Revisão das capas — {_e(job)}</h1>
-  <p>{len(itens)} vídeo(s), {pendentes} aguardando revisão. Página gerada em {gerado}.</p>
-  <p>Escolha uma variação por vídeo e rode o comando ao lado dela (o botão copia). Para aprovar a
-  variação 1 de todos os pendentes:</p>
+  <p><span id="contagem">{len(itens)} vídeo(s), {pendentes} aguardando revisão</span>.
+  Página gerada em {gerado}.</p>
+  <div class="so-arquivo">
+  <p>Escolha uma variação por vídeo e rode o comando ao lado dela (o botão copia). Para aprovar
+  a variação 1 de todos os pendentes:</p>
   {_comando(todos)}
+  <p>Para aprovar com um clique, sem copiar comandos, abra a página com
+  <code>yt-thumbnail revisar --servir</code>.</p>
+  </div>
+  <div class="so-servido">
+  <p>Clique em <strong>Aprovar esta</strong> na variação escolhida ou em <strong>Rejeitar</strong>.
+  O vídeo sai da página na hora. O envio ao YouTube continua sendo pelo comando
+  <code>yt-thumbnail enviar --aprovados</code>.</p>
+  {_botao("aprovar-todos", "", 1, "Aprovar a variação 1 de todos", "")}
+  </div>
 </header>
 <main>
 {vazio}{cartoes}
 </main>
+<div id="aviso" role="status"></div>
 <script>
+const token = document.querySelector('meta[name="yt-token"]')?.content;
+if (token) document.body.classList.add("servido");
+const job = document.body.dataset.job;
+
+function avisar(texto) {{
+  const a = document.getElementById("aviso");
+  a.textContent = texto; a.style.display = "block";
+  clearTimeout(avisar.t); avisar.t = setTimeout(() => (a.style.display = "none"), 3000);
+}}
+
+async function decidir(b) {{
+  const {{ acao, video, variacao }} = b.dataset;
+  if (acao === "aprovar-todos" &&
+      !confirm(`Aprovar a variação ${{variacao}} de todos os vídeos pendentes?`)) return;
+  const cartao = video ? document.getElementById(video) : null;
+  document.querySelectorAll("button.acao").forEach((x) => (x.disabled = true));
+  try {{
+    const r = await fetch(`/api/${{acao}}`, {{
+      method: "POST",
+      headers: {{ "Content-Type": "application/json", "X-Token": token }},
+      body: JSON.stringify({{ job, video, variacao: variacao ? Number(variacao) : undefined }}),
+    }});
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.mensagem);
+    avisar(d.mensagem);
+    const contagem = document.getElementById("contagem");
+    contagem.textContent = `${{d.restantes}} vídeo(s) aguardando revisão`;
+    if (!cartao || d.restantes === 0) {{ setTimeout(() => location.reload(), 600); return; }}
+    cartao.classList.add("saindo");
+    setTimeout(() => cartao.remove(), 300);
+  }} catch (e) {{
+    alert("Não deu certo: " + e.message + ". O servidor (yt-thumbnail revisar --servir) " +
+          "ainda está aberto?");
+  }} finally {{
+    document.querySelectorAll("button.acao").forEach((x) => (x.disabled = false));
+  }}
+}}
+
 document.addEventListener("click", async (ev) => {{
+  const acao = ev.target.closest("button[data-acao]");
+  if (acao) {{ decidir(acao); return; }}
   const b = ev.target.closest("button[data-cmd]");
   if (!b) return;
   try {{ await navigator.clipboard.writeText(b.dataset.cmd); b.textContent = "copiado"; }}
@@ -286,6 +352,15 @@ document.addEventListener("click", async (ev) => {{
 </body>
 </html>
 """
+
+
+def _botao(acao: str, video: str, variacao: int | None, rotulo: str, classe: str) -> str:
+    """Botão que decide direto (só aparece quando a página vem de ``revisar --servir``)."""
+    extra = f" data-variacao='{variacao}'" if variacao is not None else ""
+    return (
+        f"<button type='button' class='acao {classe}' data-acao='{_e(acao)}' "
+        f"data-video='{_e(video)}'{extra}>{_e(rotulo)}</button>"
+    )
 
 
 def _comando(cmd: str) -> str:
@@ -319,6 +394,7 @@ def _cartao(job: str, item: ItemRevisao) -> str:
             f"<span class='mini'>miniatura {larg}×{alt} · fonte {c.tamanho_fonte}px · "
             f"contraste {c.contraste:.1f}:1 · {c.bytes // 1024} KB</span>"
             f"{avisos}"
+            f"{_botao('aprovar', vid, n, 'Aprovar esta', 'aprovar')}"
             f"{_comando(f'yt-thumbnail aprovar {vid} --job {job} --variacao {n}')}"
             "</figcaption></figure>"
         )
@@ -331,7 +407,8 @@ def _cartao(job: str, item: ItemRevisao) -> str:
   <p class="titulo-capa">Título da capa: <strong>{_e(capas.titulo)}</strong></p>
   <p class="resumo">{_e(item.resumo)}</p>
   <div class="grade">{"".join(figuras)}</div>
-  <div class="rejeitar">{_comando(f"yt-thumbnail rejeitar {vid} --job {job}")}</div>
+  <div class="rejeitar">{_botao("rejeitar", vid, None, "Rejeitar (nenhuma serve)", "rejeitar-btn")}
+    {_comando(f"yt-thumbnail rejeitar {vid} --job {job}")}</div>
 </section>"""
 
 

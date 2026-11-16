@@ -110,7 +110,7 @@ yt-thumbnail compor --job palestras --forcar
 
 Nada é enviado ao YouTube sem passar por aqui.
 
-### `yt-thumbnail revisar [--job] [--tipo] [--nao-abrir] [--offline] [--historico]`
+### `yt-thumbnail revisar [--job] [--tipo] [--nao-abrir] [--offline] [--historico] [--servir] [--porta]`
 
 1. Baixa a **capa atual** de cada vídeo com capas compostas para `capa_original.jpg`. É o **backup** usado por `restaurar` (Fase 7): baixado uma única vez e nunca sobrescrito, mesmo com o comando repetido.
 2. Gera `saida/<job>/revisao.html` com os vídeos **aguardando decisão** e abre no navegador (`--nao-abrir` só gera; `--offline` não acessa o YouTube; `--historico` inclui também os já aprovados, rejeitados e enviados).
@@ -120,6 +120,19 @@ A página fica sempre limpa: `aprovar` e `rejeitar` a regravam na hora, tirando 
 A página mostra, por vídeo: selo LONGO/SHORT, título do vídeo (link para o YouTube), situação (aguardando, aprovada a variação N, rejeitado), título da capa e resumo da análise, a capa atual, as variações em tamanho real e em miniatura (320×180 ou 180×320, como aparecem na busca e nas sugestões), as métricas da composição (fonte, contraste, tamanho) e, ao lado de cada variação, o comando de aprovação com um botão **copiar**. Com `--historico`, os pendentes aparecem primeiro e a variação aprovada fica com borda verde.
 
 ![Página de revisão](img/revisao.jpg)
+
+#### Aprovar com um clique: `--servir`
+
+```powershell
+yt-thumbnail revisar --servir
+```
+
+Sobe um servidor local em `http://127.0.0.1:8765/` e abre a página por ele. Assim, cada variação ganha um botão **Aprovar esta**, cada vídeo um botão **Rejeitar**, e o topo um **Aprovar a variação 1 de todos** (pede confirmação). O clique grava a decisão na hora, como os comandos `aprovar` e `rejeitar`, e o vídeo sai da página. Deixe o terminal aberto enquanto revisa; **Ctrl+C** encerra. Cada decisão aparece também no terminal.
+
+- O servidor escuta só neste PC (127.0.0.1), confere o endereço pedido e exige um token que vai dentro da página servida, então outros sites e outros PCs da rede não conseguem aprovar nada.
+- Ele só aprova e rejeita: **nada é enviado ao YouTube**. Depois de revisar, rode `enviar --aprovados --dry-run`.
+- Se a porta 8765 estiver ocupada (outra revisão aberta, por exemplo), use `--porta 8766`.
+- Aberta direto do arquivo (sem `--servir`), a página continua mostrando os comandos para copiar.
 
 Executando no PC das GPUs por SSH, use `--nao-abrir` e abra o arquivo lá, ou pela rede (a página usa caminhos relativos: copiar a pasta `saida/<job>` inteira também funciona).
 

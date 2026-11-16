@@ -8,6 +8,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - `fonte_analise: titulo` por job: a análise usa só o título e a descrição, sem baixar áudio nem transcrever (a etapa `transcrever` grava uma transcrição vazia de origem `desativada`). O título vai sem o nome do palestrante ("Nome - Tema") e sem o sufixo do canal ("| Espiritismo"). Reativar a transcrição faz esses vídeos serem transcritos de verdade.
 - Preset `espiritualidade`: nomes de pessoas proibidos no título da capa.
 - `revisar --historico` mostra também os vídeos já decididos.
+- `revisar --servir [--porta 8765]`: abre a revisão por um servidor local (só 127.0.0.1, com token por sessão) e a página ganha botões **Aprovar esta**, **Rejeitar** e **Aprovar a variação 1 de todos**, sem copiar comandos para o PowerShell. O vídeo decidido sai da página na hora; Ctrl+C encerra. O envio ao YouTube continua sendo só pelo `enviar`.
 
 ### Alterado
 - A página de revisão mostra só os vídeos aguardando decisão, e `aprovar`/`rejeitar` a regravam na hora (o vídeo decidido sai da página). O backup da capa atual continua sendo baixado também para os aprovados.

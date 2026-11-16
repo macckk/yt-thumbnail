@@ -216,7 +216,8 @@ Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e
 ## Fase 6 — Revisão
 
 - **Backup** (`baixar_original`): tenta, nesta ordem, a `thumbnail_url` do `meta.json` e `i.ytimg.com/vi/<id>/{maxresdefault,hq720,sddefault,hqdefault}.jpg`; descarta o "sem capa" do YouTube (120×90) e converte WebP/PNG para JPEG. Grava `capa_original.jpg` de forma atômica e **nunca** o sobrescreve; a URL usada fica em `dados.capa_original_url`.
-- **Página** (`preparar_revisao` / `montar_html`): HTML estático em `saida/<job>/revisao.html`, CSS embutido (claro/escuro), imagens por caminho relativo (`<video_id>/capa_N.jpg`), textos escapados. Inclui vídeos com status `capas_compostas` ou posterior; pendentes primeiro.
+- **Página** (`preparar_revisao` / `montar_html`): HTML estático em `saida/<job>/revisao.html`, CSS embutido (claro/escuro), imagens por caminho relativo (`<video_id>/capa_N.jpg`), textos escapados. Inclui só os vídeos com status `capas_compostas` (com `--historico`, também os posteriores; pendentes primeiro).
+- **Servidor** (`servidor.py`, `revisar --servir`): `http.server` só em 127.0.0.1, um pedido por vez. GET serve a página (com um token aleatório injetado num `<meta>`) e as imagens `.jpg`/`.png` das pastas dos jobs; POST `/api/aprovar`, `/api/rejeitar` e `/api/aprovar-todos` exigem o token no cabeçalho `X-Token` e o `Host` local, chamam as mesmas funções `aprovar`/`rejeitar` e regravam a página. Sem `--servir`, o JavaScript da página não acha o token e mostra os comandos para copiar.
 - **Decisão** (`aprovar` / `rejeitar`): `aprovado` grava `dados.variacao`, `dados.capa` e `dados.decidido_em`; `rejeitado` limpa a variação. `aprovado` e `rejeitado` têm a mesma ordem, então trocar entre eles não é "regredir"; sair de `enviado`/`nao_elegivel` exige `--forcar`.
 
 ## Fase 7 — Autenticação e envio
