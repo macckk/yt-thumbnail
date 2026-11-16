@@ -4,6 +4,21 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+## [0.1.0] — 2026-11-16
+
+Primeira versão: da playlist do YouTube até a capa enviada, com revisão humana no meio.
+
+### Fase 9 — Preparação para o GitHub ✅ (concluída em 2026-11-16)
+- README final: exemplos de antes × depois (longos e Shorts), requisitos de hardware, início rápido em 5 passos, fluxo do dia a dia e limitações conhecidas (login de 7 dias, cota, Shorts, HTTP 429, acentos sem `libraqm`, Claude Code por SSH).
+- Shorts: `shorts_capa_personalizada` passa a ser `true` por padrão (os canais aceitam capa personalizada em Shorts); 403 da API continua virando `nao_elegivel`.
+- `config.example.yaml` pronto para **uma GPU** (`gpu.imagem: 0`, `imagem.cpu_offload: true`); `yt-thumbnail ambiente` aceita 1 GPU (2 é a recomendação).
+- `fonttools` virou dependência (o `baixar_fontes.py` falhava numa instalação nova sem ele).
+- Templates de issue (problema, ideia/preset) e de PR em `.github/`; vulnerabilidades vão para o aviso privado.
+- Varredura de segredos: `gitleaks` no histórico inteiro (sem vazamentos) e job `segredos` no CI; `config.yaml`, `secrets/`, `saida/`, tokens e `client_secret` nunca foram commitados.
+- `THIRD_PARTY_NOTICES.md` completo (NumPy, fontTools, curl-cffi, deno).
+- Instalação limpa validada no PC das GPUs, numa pasta nova e seguindo só a documentação: clone, PyTorch cu128, extras, bibliotecas CUDA, fontes, `validar` e `ambiente` todos OK com 1 GPU, testes verdes (8 min 39 s). Depois, `tudo --job meditacoes --limite 1` levou um vídeo da playlist até a revisão em 11 min (69 s por imagem), com 3 capas e o backup da capa atual.
+- `README.en.md` (opcional no plano) ficou para depois.
+
 ### Fase 8 — Orquestração ✅ (concluída em 2026-11-16)
 - `orquestracao.py` e comando `yt-thumbnail tudo [--job] [--tipo] [--limite] [--ate ETAPA] [--abrir]`: listar → transcrever → analisar → gerar → compor → revisar, parando na revisão (envio sempre explícito); erro de um vídeo ou de uma etapa não para o fluxo; memória da GPU liberada entre etapas; resumo final por etapa (tempo) e por job (na revisão, pendentes, aprovados, enviados, não elegíveis, erros); log em `saida/logs/tudo-*.log`.
 - Etapas em sequência, sem workers paralelos: com 8 GB de RAM, Whisper e SDXL juntos não cabem (documentado em `arquitetura.md`).

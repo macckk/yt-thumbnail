@@ -339,7 +339,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/arquitetura.md` completo (diagrama do fluxo e dos estados), seção "fluxo do dia a dia" no README.
 **Aceite:** playlist inteira (longos + Shorts) chega à revisão sem intervenção; reexecução só processa o que falta.
 
-### Fase 9 — Preparação para o GitHub
+### Fase 9 — Preparação para o GitHub ✅ concluída (2026-11-16)
 **Tarefas**
 - README final: o que é, exemplos de capas (antes × depois), requisitos de hardware, início rápido em 5 passos, links para `docs/`, limitações conhecidas (Shorts, cota, 7 dias).
 - Licença GPL v3: `LICENSE` com o texto integral, `SPDX-License-Identifier: GPL-3.0-or-later` no topo de cada arquivo `.py`, seção "Licença" no README; conferir a compatibilidade das dependências (MIT/BSD/Apache-2.0 são compatíveis com GPL v3). Pesos do SDXL não são distribuídos (download pelo usuário, licença OpenRAIL++-M) e as fontes OFL vão com seus próprios arquivos de licença.
@@ -347,7 +347,7 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 - Templates de issue e PR em `.github/`.
 - Varredura de segredos no histórico (ex.: `gitleaks`) e conferência de que `config.yaml`, `secrets/` e `saida/` nunca foram commitados.
 - Teste de instalação limpa: seguir `docs/instalacao-windows.md` do zero numa pasta nova (idealmente outra máquina ou usuário) e corrigir o que faltar.
-- Opcional: `README.en.md`.
+- Opcional: `README.en.md`. *(Não feito na 0.1.0.)*
 - Tag `v0.1.0` e release.
 
 **Aceite:** uma pessoa que não conhece o projeto consegue instalar, configurar um canal e gerar capas só lendo a documentação.

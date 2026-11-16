@@ -35,6 +35,10 @@ Todas compatíveis com a GPL v3.
 | google-api-python-client, google-auth-oauthlib | Apache-2.0 |
 | pydantic, typer, rich | MIT |
 | PyYAML | MIT |
+| NumPy | BSD-3-Clause |
+| fontTools | MIT |
+| curl-cffi | MIT |
+| deno (pacote PyPI do runtime Deno) | MIT |
 
 ## Ferramentas externas
 
