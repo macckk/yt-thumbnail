@@ -712,5 +712,235 @@ def rejeitar(
         raise typer.Exit(1)
 
 
+def _api_do_canal(cfg: Config, channel_id: str):  # noqa: ANN202 - isolado para os testes
+    from yt_thumbnail.youtube_api import ApiYouTube, carregar_credenciais, servico
+
+    return ApiYouTube(servico(carregar_credenciais(cfg.pasta_secrets, channel_id)))
+
+
+def _autenticar(cfg: Config, abrir_navegador: bool):  # noqa: ANN202 - isolado para os testes
+    from yt_thumbnail.youtube_api import autenticar_navegador, canal_do_token, servico
+
+    credenciais = autenticar_navegador(cfg.pasta_secrets, abrir_navegador)
+    return credenciais, canal_do_token(servico(credenciais))
+
+
+@app.command()
+def auth(
+    canal: Annotated[str, typer.Option("--canal", help="Apelido do canal (seção `canais`).")],
+    abrir: Annotated[
+        bool,
+        typer.Option("--abrir/--nao-abrir", help="Abre o navegador (senão, mostra o endereço)."),
+    ] = True,
+    config: OpcaoConfig = None,
+) -> None:
+    """Faz o login no YouTube de um canal (OAuth) e guarda o token em secrets/tokens/.
+
+    Rode no computador que tem navegador: abre a página do Google, você escolhe a conta e o
+    canal e autoriza. Se o channel_id do canal estiver vazio no config.yaml, ele é preenchido.
+    """
+    from rich.markup import escape
+
+    from yt_thumbnail.config import caminho_config
+    from yt_thumbnail.youtube_api import ErroYouTube, gravar_channel_id_no_config, gravar_token
+
+    cfg = _carregar(config)
+    if canal not in cfg.canais:
+        raise typer.BadParameter(f"canal {canal!r} não está em `canais` do config.yaml.")
+    esperado = cfg.canais[canal].channel_id
+    console.print(f"Abrindo o login do Google para o canal [bold]{canal}[/]...")
+    try:
+        credenciais, obtido = _autenticar(cfg, abrir)
+    except ErroYouTube as e:
+        console.print(f"[red]Erro:[/] {escape(str(e))}")
+        raise typer.Exit(1) from e
+    if esperado and obtido.channel_id != esperado:
+        console.print(
+            f"[red]Erro:[/] você autorizou o canal [bold]{escape(obtido.titulo)}[/] "
+            f"({obtido.channel_id}), mas `{canal}` no config.yaml é {esperado}. Rode de novo e "
+            "escolha o canal certo (contas com vários canais pedem a escolha no login)."
+        )
+        raise typer.Exit(1)
+    destino = gravar_token(cfg.pasta_secrets, obtido.channel_id, credenciais)
+    console.print(
+        f"[green]OK[/] canal [bold]{escape(obtido.titulo)}[/] ({obtido.channel_id}); "
+        f"token em {destino}"
+    )
+    if not esperado:
+        arquivo = caminho_config(config)
+        if gravar_channel_id_no_config(arquivo, canal, obtido.channel_id):
+            console.print(f"channel_id de `{canal}` gravado em {arquivo}.")
+        else:
+            console.print(
+                f"[yellow]Preencha à mão[/] em {arquivo}: canais → {canal} → "
+                f"channel_id: {obtido.channel_id}"
+            )
+
+
+@app.command()
+def canais(config: OpcaoConfig = None) -> None:
+    """Lista os canais do config.yaml e confere o login (token) de cada um."""
+    from rich.markup import escape
+    from rich.table import Table
+
+    from yt_thumbnail.youtube_api import ErroYouTube, caminho_token, canal_do_token
+
+    cfg = _carregar(config)
+    tabela = Table("Apelido", "channel_id", "Login", "Canal no YouTube", "Shorts", "Jobs")
+    falhou = False
+    for apelido, c in cfg.canais.items():
+        jobs = ", ".join(j.nome for j in cfg.jobs if j.canal == apelido) or "—"
+        shorts = "capa própria" if c.shorts_capa_personalizada else "não elegível"
+        if not c.channel_id:
+            tabela.add_row(apelido, "—", "[yellow]falta `auth`[/]", "—", shorts, jobs)
+            falhou = True
+            continue
+        if not caminho_token(cfg.pasta_secrets, c.channel_id).is_file():
+            tabela.add_row(apelido, c.channel_id, "[yellow]falta `auth`[/]", "—", shorts, jobs)
+            falhou = True
+            continue
+        try:
+            api = _api_do_canal(cfg, c.channel_id)
+            titulo = canal_do_token(api.api).titulo
+        except ErroYouTube as e:
+            tabela.add_row(apelido, c.channel_id, f"[red]{escape(str(e))}[/]", "—", shorts, jobs)
+            falhou = True
+            continue
+        tabela.add_row(apelido, c.channel_id, "[green]OK[/]", escape(titulo), shorts, jobs)
+    console.print(tabela)
+    if falhou:
+        raise typer.Exit(1)
+
+
+@app.command()
+def enviar(
+    aprovados: Annotated[
+        bool, typer.Option("--aprovados", help="Obrigatório: envia as capas aprovadas.")
+    ] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Só mostra o que seria enviado.")
+    ] = False,
+    job: OpcaoJob = None,
+    ids: OpcaoIds = None,
+    tipo: OpcaoTipo = None,
+    limite: OpcaoLimite = None,
+    config: OpcaoConfig = None,
+) -> None:
+    """Envia ao YouTube as capas aprovadas (thumbnails.set). Use --dry-run antes.
+
+    Confere o canal de cada vídeo, exige o backup da capa atual (`revisar`) e pula Shorts de
+    canais sem capa personalizada (`nao_elegivel`).
+    """
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.youtube_api import ErroYouTube, enviar_job
+
+    if not aprovados:
+        raise typer.BadParameter("use `enviar --aprovados` (e `--dry-run` para simular).")
+    cfg = _carregar(config)
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for j in _jobs_selecionados(cfg, job):
+            canal = cfg.canais[j.canal]
+            tipos = _tipos_do_job(j, tipo)
+            try:
+                api = (
+                    None
+                    if dry_run or not canal.channel_id
+                    else _api_do_canal(cfg, canal.channel_id)
+                )
+                with console.status(f"[bold]{j.nome}[/]: enviando...") as status:
+
+                    def progresso(video_id: str, i: int, total: int, _s=status, _j=j) -> None:
+                        _s.update(f"[bold]{_j.nome}[/]: {i}/{total} — {video_id}")
+
+                    r = enviar_job(
+                        job=j.nome,
+                        tipos=tipos,
+                        pasta_saida=cfg.pasta_saida,
+                        estado=estado,
+                        channel_id=canal.channel_id,
+                        shorts_capa_personalizada=canal.shorts_capa_personalizada,
+                        api=api,
+                        dry_run=dry_run,
+                        ids=_ids(ids),
+                        limite=limite,
+                        pausa=cfg.envio.pausa_segundos,
+                        ao_progredir=progresso,
+                    )
+            except ErroYouTube as e:
+                console.print(f"[red]{j.nome}:[/] {escape(str(e))}")
+                falhou = True
+                continue
+            if dry_run:
+                console.print(
+                    f"[bold]{j.nome}[/] (simulação): {len(r.simulados)} seriam enviados; "
+                    f"{len(r.nao_elegiveis)} não elegível(is); {len(r.pulados)} pulado(s); "
+                    f"{len(r.erros)} erro(s)."
+                )
+                for vid in r.simulados:
+                    variacao = estado.obter(j.nome, vid).dados.get("variacao")  # type: ignore[union-attr]
+                    console.print(f"  enviaria {vid}: variação {variacao}")
+            else:
+                console.print(
+                    f"[bold]{j.nome}[/]: {len(r.enviados)} enviado(s); "
+                    f"{len(r.nao_elegiveis)} não elegível(is); {len(r.pulados)} pulado(s); "
+                    f"{len(r.erros)} erro(s)."
+                )
+            for vid, msg in r.nao_elegiveis.items():
+                console.print(f"  [dim]não elegível[/] {vid}: {escape(msg)}")
+            for vid, msg in r.pulados.items():
+                console.print(f"  [yellow]pulado[/] {vid}: {escape(msg)}")
+            for vid, msg in r.erros.items():
+                console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
+            if r.parado_por:
+                console.print(f"  [red]parado:[/] {escape(r.parado_por)}")
+            falhou = falhou or bool(r.erros) or bool(r.parado_por)
+    if falhou:
+        raise typer.Exit(1)
+
+
+@app.command()
+def restaurar(
+    ids: Annotated[list[str], typer.Argument(help="IDs dos vídeos.", show_default=False)],
+    job: OpcaoJob = None,
+    config: OpcaoConfig = None,
+) -> None:
+    """Volta a capa original do vídeo (capa_original.jpg, o backup feito por `revisar`)."""
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.youtube_api import ErroYouTube, restaurar_video
+
+    cfg = _carregar(config)
+    falhou = False
+    with abrir_estado(cfg.pasta_saida) as estado:
+        for vid in ids:
+            nome_job = _resolver_job(cfg, estado, job, vid)
+            canal = cfg.canais[cfg.job(nome_job).canal]
+            try:
+                if not canal.channel_id:
+                    raise ErroYouTube("canal sem channel_id; rode `yt-thumbnail auth`")
+                restaurar_video(
+                    api=_api_do_canal(cfg, canal.channel_id),
+                    estado=estado,
+                    pasta_saida=cfg.pasta_saida,
+                    job=nome_job,
+                    video_id=vid,
+                    channel_id=canal.channel_id,
+                )
+            except ErroYouTube as e:
+                console.print(f"[red]erro[/] {escape(str(e))}")
+                falhou = True
+            except Exception as e:  # noqa: BLE001 - erro da API
+                console.print(f"[red]erro[/] {vid}: {escape(str(e))}")
+                falhou = True
+            else:
+                console.print(f"[green]restaurada[/] a capa original de {nome_job}/{vid}")
+    if falhou:
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()
