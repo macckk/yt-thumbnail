@@ -110,12 +110,14 @@ yt-thumbnail compor --job palestras --forcar
 
 Nada é enviado ao YouTube sem passar por aqui.
 
-### `yt-thumbnail revisar [--job] [--tipo] [--nao-abrir] [--offline]`
+### `yt-thumbnail revisar [--job] [--tipo] [--nao-abrir] [--offline] [--historico]`
 
 1. Baixa a **capa atual** de cada vídeo com capas compostas para `capa_original.jpg`. É o **backup** usado por `restaurar` (Fase 7): baixado uma única vez e nunca sobrescrito, mesmo com o comando repetido.
-2. Gera `saida/<job>/revisao.html` e abre no navegador (`--nao-abrir` só gera; `--offline` não acessa o YouTube).
+2. Gera `saida/<job>/revisao.html` com os vídeos **aguardando decisão** e abre no navegador (`--nao-abrir` só gera; `--offline` não acessa o YouTube; `--historico` inclui também os já aprovados, rejeitados e enviados).
 
-A página mostra, por vídeo: selo LONGO/SHORT, título do vídeo (link para o YouTube), situação (aguardando, aprovada a variação N, rejeitado), título da capa e resumo da análise, a capa atual, as variações em tamanho real e em miniatura (320×180 ou 180×320, como aparecem na busca e nas sugestões), as métricas da composição (fonte, contraste, tamanho) e, ao lado de cada variação, o comando de aprovação com um botão **copiar**. Vídeos pendentes aparecem primeiro; a variação aprovada fica com borda verde.
+A página fica sempre limpa: `aprovar` e `rejeitar` a regravam na hora, tirando os vídeos decididos (basta recarregar o navegador). Quando não sobra nenhum, ela mostra "Nenhum vídeo aguardando revisão".
+
+A página mostra, por vídeo: selo LONGO/SHORT, título do vídeo (link para o YouTube), situação (aguardando, aprovada a variação N, rejeitado), título da capa e resumo da análise, a capa atual, as variações em tamanho real e em miniatura (320×180 ou 180×320, como aparecem na busca e nas sugestões), as métricas da composição (fonte, contraste, tamanho) e, ao lado de cada variação, o comando de aprovação com um botão **copiar**. Com `--historico`, os pendentes aparecem primeiro e a variação aprovada fica com borda verde.
 
 ![Página de revisão](img/revisao.jpg)
 

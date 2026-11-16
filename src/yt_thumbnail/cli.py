@@ -6,6 +6,7 @@ Comandos são adicionados fase a fase (ver PLANO.md). Lista completa: ``docs/uso
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Annotated
 
@@ -574,12 +575,19 @@ def revisar(
     offline: Annotated[
         bool, typer.Option("--offline", help="Não baixa as capas atuais do YouTube.")
     ] = False,
+    historico: Annotated[
+        bool,
+        typer.Option(
+            "--historico", help="Inclui os já aprovados, rejeitados e enviados na página."
+        ),
+    ] = False,
     config: OpcaoConfig = None,
 ) -> None:
     """Gera a página de revisão (saida/<job>/revisao.html) e baixa a capa atual (backup).
 
-    A capa atual de cada vídeo vai para capa_original.jpg uma única vez: ela é o backup que
-    `restaurar` usa e nunca é sobrescrita.
+    A página mostra só os vídeos aguardando decisão; `aprovar` e `rejeitar` a atualizam
+    sozinhos. A capa atual de cada vídeo vai para capa_original.jpg uma única vez: ela é o
+    backup que `restaurar` usa e nunca é sobrescrita.
     """
     import webbrowser
 
@@ -600,6 +608,7 @@ def revisar(
                     estado=estado,
                     tipos=tipos,
                     baixar=None if offline else _baixador_padrao(),
+                    incluir_decididos=historico,
                 )
             pend = sum(1 for i in r.itens if i.registro.status == "capas_compostas")
             console.print(
@@ -614,6 +623,27 @@ def revisar(
     if abrir:
         for p in paginas:
             webbrowser.open(p.resolve().as_uri())
+
+
+def _atualizar_paginas(cfg: Config, estado, jobs: Iterable[str]) -> None:  # noqa: ANN001
+    """Regrava a página de revisão dos jobs (sem rede), tirando os vídeos já decididos."""
+    from yt_thumbnail.revisao import preparar_revisao
+
+    por_nome = {j.nome: j for j in cfg.jobs}
+    for nome in sorted(set(jobs)):
+        j = por_nome[nome]
+        r = preparar_revisao(
+            job=nome,
+            pasta_saida=cfg.pasta_saida,
+            estado=estado,
+            tipos=_tipos_do_job(j, None),
+            baixar=None,
+        )
+        restantes = len(r.itens)
+        console.print(
+            f"Página de revisão de {nome} atualizada: "
+            + (f"{restantes} vídeo(s) aguardando." if restantes else "nenhum vídeo aguardando.")
+        )
 
 
 def _baixador_padrao():  # noqa: ANN202 - isolado para os testes trocarem
@@ -680,6 +710,7 @@ def aprovar(
                 falhou = True
             else:
                 console.print(f"[green]aprovado[/] {nome_job}/{vid}: variação {variacao}")
+        _atualizar_paginas(cfg, estado, (n for n, _ in alvos))
     if not alvos:
         console.print("Nenhum vídeo pendente de revisão.")
     if falhou:
@@ -705,6 +736,7 @@ def rejeitar(
     cfg = _carregar(config)
     falhou = False
     with abrir_estado(cfg.pasta_saida) as estado:
+        feitos = []
         for vid in ids:
             nome_job = _resolver_job(cfg, estado, job, vid)
             try:
@@ -714,6 +746,8 @@ def rejeitar(
                 falhou = True
             else:
                 console.print(f"[yellow]rejeitado[/] {nome_job}/{vid}")
+                feitos.append(nome_job)
+        _atualizar_paginas(cfg, estado, feitos)
     if falhou:
         raise typer.Exit(1)
 
@@ -1003,7 +1037,9 @@ def tudo(
             **comuns, ids=None, tipo=tipo, variacoes=None, forcar=False, limite=limite
         ),
         "compor": lambda: compor(**comuns, ids=None, tipo=tipo, forcar=False, limite=limite),
-        "revisar": lambda: revisar(**comuns, tipo=tipo, abrir=abrir, offline=False),
+        "revisar": lambda: revisar(
+            **comuns, tipo=tipo, abrir=abrir, offline=False, historico=False
+        ),
     }
 
     gravando = console.record

@@ -140,7 +140,7 @@ def test_preparar_revisao(tmp_path: Path) -> None:
             baixar=lambda url: _imagem("JPEG"),
         )
         assert sorted(r.originais_baixadas) == ["lg", "sh"]
-        assert [i.meta.video_id for i in r.itens] == ["lg", "sh"]  # pendentes primeiro
+        assert [i.meta.video_id for i in r.itens] == ["lg"]  # só quem aguarda decisão
         assert estado.obter("j", "lg").dados["capa_original_url"].startswith("https://i.ytimg")
         assert estado.obter("j", "lg").status == "capas_compostas"
     pagina = (tmp_path / "j" / "revisao.html").read_text(encoding="utf-8")
@@ -149,10 +149,32 @@ def test_preparar_revisao(tmp_path: Path) -> None:
     assert "yt-thumbnail rejeitar lg --job j" in pagina
     assert "yt-thumbnail aprovar --job j --todos --variacao 1" in pagina
     assert "lg/capa_1.jpg" in pagina and "lg/mini_1.jpg" in pagina and f"lg/{ORIGINAL}" in pagina
-    assert ">SHORT<" in pagina and ">LONGO<" in pagina
-    assert "aprovada a variação 2" in pagina
+    assert ">LONGO<" in pagina and ">SHORT<" not in pagina  # o Short aprovado saiu da página
     assert "&lt;lg&gt; &amp; cia" in pagina and "<tags>" not in pagina
     assert "cedo" not in pagina
+
+
+def test_preparar_revisao_historico(tmp_path: Path) -> None:
+    with abrir_estado(tmp_path) as estado:
+        _video(tmp_path, estado, "j", "lg")
+        _video(tmp_path, estado, "j", "sh", "short")
+        aprovar(estado, tmp_path, "j", "sh", 2)
+        r = preparar_revisao(
+            job="j",
+            pasta_saida=tmp_path,
+            estado=estado,
+            tipos=["longo", "short"],
+            baixar=None,
+            incluir_decididos=True,
+        )
+        assert [i.meta.video_id for i in r.itens] == ["lg", "sh"]  # pendentes primeiro
+        assert "aprovada a variação 2" in r.pagina.read_text(encoding="utf-8")
+        aprovar(estado, tmp_path, "j", "lg", 1)
+        r = preparar_revisao(
+            job="j", pasta_saida=tmp_path, estado=estado, tipos=["longo", "short"], baixar=None
+        )
+        assert not r.itens
+        assert "Nenhum vídeo aguardando revisão" in r.pagina.read_text(encoding="utf-8")
 
 
 def test_preparar_revisao_offline(tmp_path: Path) -> None:
@@ -220,12 +242,19 @@ def test_cli_revisar_aprovar_rejeitar(projeto: Path, monkeypatch) -> None:
     assert (saida / "meditacoes" / "revisao.html").is_file()
     assert (pasta_video(saida, "meditacoes", "v1") / ORIGINAL).is_file()
 
+    pagina = saida / "meditacoes" / "revisao.html"
     r = runner.invoke(app, ["aprovar", "v1", "--variacao", "2", "-c", cfg])
     assert r.exit_code == 0, r.output
+    assert "2 vídeo(s) aguardando" in r.output
+    assert "v1/capa_1.jpg" not in pagina.read_text(encoding="utf-8")  # saiu da página
     r = runner.invoke(app, ["rejeitar", "v2", "-c", cfg])
     assert r.exit_code == 0, r.output
     r = runner.invoke(app, ["aprovar", "--todos", "--variacao", "3", "-c", cfg])
     assert r.exit_code == 0, r.output
+    assert "Nenhum vídeo aguardando revisão" in pagina.read_text(encoding="utf-8")
+    r = runner.invoke(app, ["revisar", "-c", cfg, "--nao-abrir", "--historico", "--offline"])
+    assert r.exit_code == 0, r.output
+    assert "v1/capa_1.jpg" in pagina.read_text(encoding="utf-8")
     with abrir_estado(saida) as estado:
         assert estado.obter("meditacoes", "v1").dados["variacao"] == 2
         assert estado.obter("meditacoes", "v2").status == "rejeitado"

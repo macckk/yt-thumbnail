@@ -128,11 +128,14 @@ def preparar_revisao(
     estado: Estado,
     tipos: Iterable[str],
     baixar: Baixador | None = baixar_http,
+    incluir_decididos: bool = False,
 ) -> ResultadoRevisao:
     """Baixa as capas originais que faltam e grava ``<saida>/<job>/revisao.html``.
 
-    Entram os vídeos com capas compostas (inclusive já aprovados, rejeitados ou enviados).
-    Com ``baixar=None`` não acessa a rede (a capa original aparece só se já existir).
+    Entram só os vídeos aguardando decisão (``capas_compostas``): depois de aprovar ou
+    rejeitar, o vídeo sai da página. Com ``incluir_decididos``, entram também os aprovados,
+    rejeitados, enviados e não elegíveis (histórico). Com ``baixar=None`` não acessa a rede
+    (a capa original aparece só se já existir).
     """
     tipos = set(tipos)
     resultado = ResultadoRevisao()
@@ -153,6 +156,8 @@ def preparar_revisao(
                 if url is not None:
                     resultado.originais_baixadas.append(r.video_id)
                     estado.registrar(job, r.video_id, r.status, dados={"capa_original_url": url})  # type: ignore[arg-type]
+        if r.status != "capas_compostas" and not incluir_decididos:
+            continue  # já decidido: fora da página (o backup acima continua valendo)
         analise = ler_analise(pasta)
         resultado.itens.append(
             ItemRevisao(
@@ -194,8 +199,8 @@ def montar_html(job: str, itens: list[ItemRevisao]) -> str:
     cartoes = "\n".join(_cartao(job, i) for i in itens)
     gerado = datetime.now().strftime("%d/%m/%Y %H:%M")
     vazio = (
-        "<p class='vazio'>Nenhum vídeo com capas compostas. Rode <code>yt-thumbnail compor</code>."
-        "</p>"
+        "<p class='vazio'>Nenhum vídeo aguardando revisão. Para gerar mais capas, rode "
+        "<code>yt-thumbnail tudo --limite 10</code>.</p>"
         if not itens
         else ""
     )
