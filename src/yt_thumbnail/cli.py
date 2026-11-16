@@ -137,6 +137,9 @@ def listar(
     job: OpcaoJob = None,
     ids: OpcaoIds = None,
     forcar: OpcaoForcar = False,
+    so_novos: Annotated[
+        bool, typer.Option("--so-novos", help="Na tabela, mostra só os vídeos novos.")
+    ] = False,
     config: OpcaoConfig = None,
 ) -> None:
     """Lista os vídeos da playlist de cada job e detecta o tipo (longo/Short).
@@ -180,7 +183,7 @@ def listar(
             for col in ("#", "ID", "Tipo", "Duração", "Dimensões", "Título", ""):
                 tabela.add_column(col)
             novos = {m.video_id for m in r.novos}
-            for m in r.todos:
+            for m in r.novos if so_novos else r.todos:
                 tipo = "[magenta]SHORT[/]" if m.tipo == "short" else "[cyan]LONGO[/]"
                 if m.tipo not in j.tipos:
                     tipo += " [dim](fora do job)[/]"
@@ -194,7 +197,8 @@ def listar(
                     escape(m.titulo[:60]),
                     "[green]novo[/]" if m.video_id in novos else "",
                 )
-            console.print(tabela)
+            if tabela.row_count:
+                console.print(tabela)
             n_short = sum(m.tipo == "short" for m in r.todos)
             console.print(
                 f"{len(r.todos)} vídeo(s): {len(r.todos) - n_short} longo(s), {n_short} Short(s); "
@@ -988,7 +992,7 @@ def tudo(
     etapas = ETAPAS[: ETAPAS.index(ate) + 1]
     comuns = {"job": job, "config": config}
     chamadas = {
-        "listar": lambda: listar(**comuns, ids=None, forcar=False),
+        "listar": lambda: listar(**comuns, ids=None, forcar=False, so_novos=True),
         "transcrever": lambda: transcrever(
             **comuns, ids=None, tipo=tipo, forcar=False, forcar_whisper=False, limite=limite
         ),

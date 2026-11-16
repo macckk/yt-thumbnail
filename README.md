@@ -11,7 +11,7 @@ Para cada vídeo (longo ou Short) de uma playlist pública dos seus canais:
 5. gera uma página HTML para **revisão humana** (antes × depois);
 6. envia a capa aprovada pela YouTube Data API, no canal certo.
 
-> **Status:** em desenvolvimento — Fase 7 (login no YouTube e envio). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
+> **Status:** em desenvolvimento — Fase 8 (orquestração). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
 
 ## Requisitos
 
@@ -35,6 +35,18 @@ yt-thumbnail ambiente
 ```
 
 Passo a passo completo (drivers, CUDA, PyTorch, FFmpeg): [docs/instalacao-windows.md](docs/instalacao-windows.md).
+
+## Fluxo do dia a dia
+
+```powershell
+yt-thumbnail tudo                               # da playlist até a revisão (só o que falta)
+# abra saida\<job>\revisao.html e escolha as capas:
+yt-thumbnail aprovar <id> --variacao 2          # ou: aprovar --todos --variacao 1
+yt-thumbnail enviar --aprovados --dry-run       # confira
+yt-thumbnail enviar --aprovados                 # envia ao YouTube
+```
+
+Se algo der errado: `yt-thumbnail restaurar <id>` volta a capa original. Detalhes em [docs/uso-cli.md](docs/uso-cli.md).
 
 ## Importante
 

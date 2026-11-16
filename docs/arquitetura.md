@@ -45,6 +45,7 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `composicao.py` | Fase 5: título sobre as imagens (Pillow), capas e miniaturas |
 | `revisao.py` | Fase 6: backup da capa atual, página de revisão, aprovar/rejeitar |
 | `youtube_api.py` | Fase 7: OAuth por canal, envio e restauração |
+| `orquestracao.py` | Fase 8: `tudo`, liberação de memória entre etapas, resumo do estado |
 | `ambiente.py` | verificação do ambiente |
 | `cli.py` | comandos (Typer) |
 
@@ -238,3 +239,13 @@ Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e
   "historico": [ { "acao": "enviar", "...": "..." } ]
 }
 ```
+
+## Fase 8 — Orquestração
+
+`yt-thumbnail tudo` chama os próprios comandos da CLI em sequência (`listar`, `transcrever`, `analisar`, `gerar`, `compor`, `revisar`), com os mesmos filtros (`--job`, `--tipo`, `--limite`). Como cada etapa é idempotente e o estado só avança, a orquestração não precisa de filas: a "fila" de cada etapa é a lista de vídeos no status anterior.
+
+- **Erros**: um `typer.Exit(1)` de uma etapa (vídeos com erro) é anotado e o fluxo segue; `Exit(2)` (uso/configuração) para tudo. Exceções inesperadas também não perdem o log.
+- **Memória**: depois de cada etapa, `gc.collect()` e `torch.cuda.empty_cache()` (`liberar_memoria`). Whisper e SDXL nunca ficam carregados juntos.
+- **Sem paralelismo**: o plano previa workers de transcrição (GPU 0) e imagem (GPU 1) em paralelo; no PC de referência (8 GB de RAM, e a GPU 1 fora de serviço) isso estoura a memória, então as etapas são sequenciais. Com 16–32 GB de RAM e as duas GPUs, dá para rodar `transcrever` e `gerar` em dois terminais ao mesmo tempo, cada um na sua GPU — o estado em SQLite aguenta.
+- **Log**: o console do rich grava tudo (`record=True`) e o texto vai para `saida/logs/tudo-*.log` no fim, mesmo em caso de erro.
+- **Resumo** (`resumir`): contagem por status, erros pendentes (`erro`/`mensagem` do estado) e não elegíveis, por job.

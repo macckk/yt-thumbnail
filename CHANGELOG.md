@@ -4,6 +4,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Fase 8 — Orquestração ✅ (concluída em 2026-11-16)
+- `orquestracao.py` e comando `yt-thumbnail tudo [--job] [--tipo] [--limite] [--ate ETAPA] [--abrir]`: listar → transcrever → analisar → gerar → compor → revisar, parando na revisão (envio sempre explícito); erro de um vídeo ou de uma etapa não para o fluxo; memória da GPU liberada entre etapas; resumo final por etapa (tempo) e por job (na revisão, pendentes, aprovados, enviados, não elegíveis, erros); log em `saida/logs/tudo-*.log`.
+- Etapas em sequência, sem workers paralelos: com 8 GB de RAM, Whisper e SDXL juntos não cabem (documentado em `arquitetura.md`).
+- `listar --so-novos` (usado pelo `tudo`) para não repetir a tabela inteira da playlist.
+- Docs: `tudo` em `uso-cli.md` (inclusive agendamento no Windows), "Fluxo do dia a dia" no README, seção da Fase 8 em `arquitetura.md`.
+- Validado no PC das GPUs (1 GPU, 8 GB de RAM): `tudo --limite 2` levou 4 vídeos novos (2 por job) da playlist à revisão em 32 min (transcrição 15 min pelo Whisper por causa do HTTP 429 nas legendas, imagens 15 min a ~75 s cada), pulando o que já existia; pico de 5,7 GB no processo e a RAM livre do sistema chegou a ~4 MB (sem travar).
+
 ### Fase 7 — Autenticação multicanal e envio ✅ (concluída em 2026-11-16)
 - `youtube_api.py`: OAuth "App para computador" com `youtube.upload` + `youtube.readonly`, um token por canal em `secrets/tokens/<channel_id>.json`, renovação automática e aviso de login vencido (modo Teste: 7 dias).
 - Envio só de aprovados, conferindo o canal do vídeo e exigindo o backup da capa atual; Shorts de canais sem capa própria viram `nao_elegivel`; pausa aleatória entre envios, novas tentativas em 429/5xx, cota esgotada para o lote; `envio.json` com histórico.

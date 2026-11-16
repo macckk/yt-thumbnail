@@ -29,7 +29,9 @@ Verifica Python, GPUs/VRAM, PyTorch+CUDA, bibliotecas de GPU, FFmpeg, yt-dlp, Cl
 
 Valida o `config.yaml` e todos os presets usados pelos jobs; lista os jobs encontrados.
 
-### `yt-thumbnail listar [--job nome] [--ids ...] [--forcar]`
+### `yt-thumbnail listar [--job nome] [--ids ...] [--forcar] [--so-novos]`
+
+`--so-novos` mostra na tabela só os vídeos que entraram agora (o `tudo` usa assim).
 
 Lê a playlist de cada job com o yt-dlp (sem API key e sem baixar mídia), consulta os metadados de cada vídeo e detecta o tipo:
 
@@ -167,6 +169,25 @@ yt-thumbnail enviar --aprovados --limite 20
 
 Envia de volta a capa original (`capa_original.jpg`) e marca o vídeo como `rejeitado` (não será reenviado). Se o vídeo não tinha capa personalizada, o quadro automático que o YouTube usava passa a ser a capa enviada (mesma imagem).
 
-## Comandos planejados
+## Tudo de uma vez
 
-`tudo` — entram nas próximas fases (ver `PLANO.md`).
+### `yt-thumbnail tudo [--job] [--tipo] [--limite N] [--ate ETAPA] [--abrir]`
+
+Roda `listar → transcrever → analisar → gerar → compor → revisar` e **para na revisão** — o envio é sempre um comando à parte (`enviar --aprovados`).
+
+- Cada etapa só processa o que falta: rodar de novo continua de onde parou (inclusive depois de queda de energia ou erro).
+- Erro num vídeo não para o fluxo: fica no estado e aparece no resumo. Uma etapa que falha inteira (ex.: playlist inacessível) também não impede as seguintes de processar o que já existe. Só erro de configuração interrompe.
+- `--limite N`: no máximo N vídeos **novos** por etapa e por job (útil para lotes: `--limite 20` toda noite).
+- `--ate gerar`: para depois da etapa indicada.
+- `--abrir`: abre a página de revisão no fim (padrão: não abre, pensando em execução por SSH ou agendada).
+- No fim, um resumo: tempo de cada etapa e, por job, vídeos, quantos chegaram à revisão, pendentes, aprovados, enviados, não elegíveis e erros (com a etapa e a mensagem).
+- Tudo o que aparece no terminal vai também para `saida/logs/tudo-AAAAMMDD-HHMMSS.log`.
+
+As etapas rodam **uma depois da outra**: com 8 GB de RAM, Whisper e SDXL carregados juntos estouram a memória. Entre as etapas os modelos são liberados.
+
+```powershell
+yt-thumbnail tudo                      # todos os jobs, tudo o que falta
+yt-thumbnail tudo --job palestras --limite 10
+```
+
+Para rodar todo dia sozinho, agende no **Agendador de Tarefas** do Windows: programa `C:\Users\<você>\yt-thumbnail\.venv\Scripts\yt-thumbnail.exe`, argumentos `tudo --limite 20`, iniciar em `C:\Users\<você>\yt-thumbnail`.

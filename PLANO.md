@@ -329,10 +329,10 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/google-oauth.md` (passo a passo com capturas: projeto, API, tela de consentimento, client Desktop, multicanal, modo Testing × Production, cota), `docs/shorts.md`.
 **Aceite:** `--dry-run` correto; capa de vídeo longo aparece no Studio; Shorts dos canais atuais são pulados como `nao_elegivel`; `restaurar` funciona.
 
-### Fase 8 — Orquestração e paralelismo
+### Fase 8 — Orquestração e paralelismo ✅ concluída (2026-11-16)
 **Tarefas**
 - `yt-thumbnail tudo [--job nome]`: listar → transcrever → analisar → gerar → compor → revisar (**para na revisão**; enviar é sempre explícito).
-- Workers: transcrição (GPU 0) e imagem (GPU 1) consumindo filas em paralelo.
+- Workers: transcrição (GPU 0) e imagem (GPU 1) consumindo filas em paralelo. *(Não implementado: com 8 GB de RAM e uma GPU só, as etapas rodam em sequência; ver `docs/arquitetura.md`.)*
 - Log em arquivo + resumo final (OK / pulados / erros / não elegíveis).
 - Rodar todos os jobs: `yt-thumbnail tudo --todos-jobs`.
 
