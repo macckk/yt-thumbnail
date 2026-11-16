@@ -44,6 +44,7 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `imagem.py` | Fase 4: SDXL, variações e ajuste para a saída |
 | `composicao.py` | Fase 5: título sobre as imagens (Pillow), capas e miniaturas |
 | `revisao.py` | Fase 6: backup da capa atual, página de revisão, aprovar/rejeitar |
+| `youtube_api.py` | Fase 7: OAuth por canal, envio e restauração |
 | `ambiente.py` | verificação do ambiente |
 | `cli.py` | comandos (Typer) |
 
@@ -216,3 +217,24 @@ Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e
 - **Backup** (`baixar_original`): tenta, nesta ordem, a `thumbnail_url` do `meta.json` e `i.ytimg.com/vi/<id>/{maxresdefault,hq720,sddefault,hqdefault}.jpg`; descarta o "sem capa" do YouTube (120×90) e converte WebP/PNG para JPEG. Grava `capa_original.jpg` de forma atômica e **nunca** o sobrescreve; a URL usada fica em `dados.capa_original_url`.
 - **Página** (`preparar_revisao` / `montar_html`): HTML estático em `saida/<job>/revisao.html`, CSS embutido (claro/escuro), imagens por caminho relativo (`<video_id>/capa_N.jpg`), textos escapados. Inclui vídeos com status `capas_compostas` ou posterior; pendentes primeiro.
 - **Decisão** (`aprovar` / `rejeitar`): `aprovado` grava `dados.variacao`, `dados.capa` e `dados.decidido_em`; `rejeitado` limpa a variação. `aprovado` e `rejeitado` têm a mesma ordem, então trocar entre eles não é "regredir"; sair de `enviado`/`nao_elegivel` exige `--forcar`.
+
+## Fase 7 — Autenticação e envio
+
+- **OAuth** (`autenticar_navegador`): `InstalledAppFlow` com `secrets/client_secret.json` e os escopos `youtube.upload` + `youtube.readonly`, servidor local numa porta livre. `canal_do_token` (`channels.list mine=true`) identifica o canal; o token vai para `secrets/tokens/<channel_id>.json` (gravação atômica). `carregar_credenciais` renova o token; `invalid_grant` vira uma mensagem pedindo `auth` de novo.
+- **Envio** (`enviar_job`): só status `aprovado`; confere o canal (`meta.json`, ou `videos.list` se faltar), exige `capa_original.jpg`, trata Shorts (`nao_elegivel`), checa o limite de 2 MB, e chama `thumbnails.set` com retentativa exponencial (30 s, 60 s, 120 s) em 429/5xx. `quotaExceeded` para o lote. Cada vídeo enviado grava `envio.json` e passa a `enviado`.
+- **Restauração** (`restaurar_video`): envia `capa_original.jpg`, acrescenta ao histórico de `envio.json` e marca `rejeitado` (com `restaurado_em`).
+- A API fica atrás do protocolo `ApiCapas`, simulado nos testes.
+
+### `envio.json`
+
+```json
+{
+  "acao": "enviar",
+  "enviado_em": "2026-11-16T14:00:00+00:00",
+  "variacao": 2,
+  "arquivo": "capa_2.jpg",
+  "channel_id": "UC...",
+  "resposta": {"kind": "youtube#thumbnailSetResponse", "items": [...]},
+  "historico": [ { "acao": "enviar", "...": "..." } ]
+}
+```

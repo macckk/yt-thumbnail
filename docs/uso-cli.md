@@ -133,6 +133,40 @@ Rejeita as capas do vídeo: ele não será enviado. Para tentar de novo, gere ou
 
 Mudar de ideia é livre até o envio (aprovar outra variação, rejeitar um aprovado ou aprovar um rejeitado). Depois de `enviado`, só com `--forcar`. Recompor com `compor --forcar` também desfaz a decisão.
 
+## YouTube: login, envio e restauração
+
+Antes, crie o OAuth client no Google Cloud: [google-oauth.md](google-oauth.md).
+
+### `yt-thumbnail auth --canal APELIDO [--nao-abrir]`
+
+Login OAuth de um canal (abre o navegador **no computador onde roda**). Guarda o token em `secrets/tokens/<channel_id>.json` e preenche o `channel_id` do canal no `config.yaml` se estiver vazio; se estiver preenchido com outro canal, recusa.
+
+### `yt-thumbnail canais`
+
+Tabela com os canais do `config.yaml`: `channel_id`, situação do login (OK, falta `auth`, venceu), nome do canal no YouTube, se aceita capa de Short e quais jobs usam o canal.
+
+### `yt-thumbnail enviar --aprovados [--dry-run] [--job] [--ids] [--tipo] [--limite N]`
+
+Envia (`thumbnails.set`) as capas **aprovadas**. Rode primeiro com `--dry-run`: mostra o que seria enviado, sem acessar a API.
+
+Para cada vídeo aprovado, nesta ordem:
+
+1. o canal do vídeo precisa ser o canal do job (senão: **pulado**);
+2. o backup `capa_original.jpg` precisa existir (senão: **pulado** — rode `revisar`);
+3. Short em canal com `shorts_capa_personalizada: false` → **não elegível** (ver [shorts.md](shorts.md));
+4. envio, com pausa aleatória de `envio.pausa_segundos` entre vídeos e novas tentativas em 429/5xx.
+
+Depois do envio: status `enviado` e `envio.json` na pasta do vídeo (data, variação, resposta da API e histórico). Cota esgotada para o lote (continue no dia seguinte; ver [google-oauth.md](google-oauth.md#4-cota-da-api)).
+
+```powershell
+yt-thumbnail enviar --aprovados --dry-run
+yt-thumbnail enviar --aprovados --limite 20
+```
+
+### `yt-thumbnail restaurar ID [ID...] [--job]`
+
+Envia de volta a capa original (`capa_original.jpg`) e marca o vídeo como `rejeitado` (não será reenviado). Se o vídeo não tinha capa personalizada, o quadro automático que o YouTube usava passa a ser a capa enviada (mesma imagem).
+
 ## Comandos planejados
 
-`enviar`, `restaurar`, `auth`, `canais`, `tudo` — entram nas próximas fases (ver `PLANO.md`).
+`tudo` — entram nas próximas fases (ver `PLANO.md`).

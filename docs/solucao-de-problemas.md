@@ -136,6 +136,36 @@ O SDXL (~7 GB, variante fp16) é baixado do Hugging Face para o cache (`HF_HOME`
 
 O SDXL às vezes desenha "pseudo-texto". O `negative_prompt` do preset já inclui `text, letters, words`; gere outras variações (`--forcar`) ou deixe o template de análise insistir em áreas lisas (céu, parede, névoa) do lado do título.
 
+## YouTube (login e envio)
+
+### `secrets/client_secret.json não encontrado`
+
+Crie o OAuth client "App para computador" e salve o JSON com esse nome ([google-oauth.md](google-oauth.md)).
+
+### "Acesso bloqueado: o app não concluiu o processo de verificação"
+
+A conta usada no login não está em **Usuários de teste** do Google Cloud. Adicione-a e tente de novo.
+
+### `o login do canal ... venceu ou foi revogado`
+
+No modo "Teste" do Google Cloud o login dura 7 dias. Rode `yt-thumbnail auth --canal <apelido>` de novo, ou publique o app ([google-oauth.md](google-oauth.md#3-modo-teste--em-produção)).
+
+### `você autorizou o canal X, mas ... no config.yaml é Y`
+
+A conta tem mais de um canal e foi escolhido outro no login. Rode `auth` de novo e escolha o canal certo.
+
+### Vídeo `pulado`: "sem backup da capa atual"
+
+Rode `yt-thumbnail revisar` (baixa `capa_original.jpg`) antes de enviar.
+
+### `cota diária da API esgotada`
+
+O projeto do Google Cloud tem 10.000 unidades por dia (~200 capas). Continue no dia seguinte; o que já foi enviado não é reenviado.
+
+### HTTP 403 ao enviar capa de vídeo longo
+
+O canal precisa estar verificado (por telefone) para usar capas personalizadas: [youtube.com/verify](https://www.youtube.com/verify).
+
 ## Revisão
 
 ### Aviso `não foi possível baixar a capa atual`

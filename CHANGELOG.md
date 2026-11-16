@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Fase 7 — Autenticação multicanal e envio (em validação)
+- `youtube_api.py`: OAuth "App para computador" com `youtube.upload` + `youtube.readonly`, um token por canal em `secrets/tokens/<channel_id>.json`, renovação automática e aviso de login vencido (modo Teste: 7 dias).
+- Envio só de aprovados, conferindo o canal do vídeo e exigindo o backup da capa atual; Shorts de canais sem capa própria viram `nao_elegivel`; pausa aleatória entre envios, novas tentativas em 429/5xx, cota esgotada para o lote; `envio.json` com histórico.
+- Comandos `auth --canal`, `canais`, `enviar --aprovados [--dry-run]`, `restaurar ID`; `auth` preenche o `channel_id` vazio no `config.yaml`.
+- Docs: `google-oauth.md` (Google Cloud passo a passo, login, Teste × Produção, cota) e `shorts.md`.
+
 ### Fase 6 — Revisão (HTML) ✅ (concluída em 2026-11-07)
 - `revisao.py`: backup da capa atual em `capa_original.jpg` (baixado uma única vez, nunca sobrescrito; ignora o "sem capa" 120×90 do YouTube e converte WebP), página estática `saida/<job>/revisao.html` com selo LONGO/SHORT, capa atual, variações em tamanho real e miniatura, métricas da composição e comandos prontos para copiar.
 - Comandos `yt-thumbnail revisar [--job] [--tipo] [--nao-abrir] [--offline]`, `aprovar ID... --variacao N`, `aprovar --todos --variacao N`, `rejeitar ID...`; mudar a decisão de vídeo já enviado só com `--forcar`.

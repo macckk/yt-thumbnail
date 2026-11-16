@@ -11,7 +11,7 @@ Para cada vídeo (longo ou Short) de uma playlist pública dos seus canais:
 5. gera uma página HTML para **revisão humana** (antes × depois);
 6. envia a capa aprovada pela YouTube Data API, no canal certo.
 
-> **Status:** em desenvolvimento — Fase 6 (revisão e aprovação). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
+> **Status:** em desenvolvimento — Fase 7 (login no YouTube e envio). Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
 
 ## Requisitos
 
@@ -52,6 +52,8 @@ Passo a passo completo (drivers, CUDA, PyTorch, FFmpeg): [docs/instalacao-window
 | [Presets](docs/presets.md) | identidade visual e como criar novos |
 | [Uso da CLI](docs/uso-cli.md) | comandos e opções |
 | [Arquitetura](docs/arquitetura.md) | fluxo, estados e arquivos |
+| [Google Cloud e login](docs/google-oauth.md) | OAuth client, login por canal, cota |
+| [Shorts](docs/shorts.md) | quando a capa de Short pode ser enviada |
 | [Solução de problemas](docs/solucao-de-problemas.md) | erros comuns |
 
 ## Licença
