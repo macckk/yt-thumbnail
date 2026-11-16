@@ -247,6 +247,8 @@ def test_claude_ausente(monkeypatch) -> None:
         ("Célia de Araújo – Todos Somos Chamados", "Todos Somos Chamados"),
         ("A cura começa - parte 2", "A cura começa - parte 2"),  # não é nome próprio
         ("Perdão | Espiritismo", "Perdão"),
+        ("Palestra: O Pai Nosso - Matheus Toschi", "O Pai Nosso"),
+        ("Palestra: Como ser fiel à Deus - Orlando Ribeiro", "Como ser fiel à Deus"),
         ("Livre-arbítrio e destino", "Livre-arbítrio e destino"),
     ],
 )

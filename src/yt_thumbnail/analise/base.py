@@ -143,23 +143,34 @@ def preencher(template: str, valores: dict[str, Any]) -> str:
 
 _CONECTIVOS = {"de", "da", "do", "das", "dos", "e"}
 _PREFIXO_NOME = re.compile(r"^\s*(?P<nome>[^|:?!]{3,60}?)\s+[-–—]\s+(?P<resto>\S.*)$")
+_SUFIXO_NOME = re.compile(r"^(?P<resto>.*\S)\s+[-–—]\s+(?P<nome>[^-–—|:?!]{3,60})$")
+_ROTULO = re.compile(r"^\s*palestra\s*:\s*", re.IGNORECASE)
+
+
+def _parece_nome(texto: str) -> bool:
+    palavras = texto.split()
+    return 2 <= len(palavras) <= 6 and all(
+        p[0].isupper() or p.lower() in _CONECTIVOS for p in palavras
+    )
 
 
 def limpar_titulo(titulo: str) -> str:
     """Tira do título o que não é tema: sufixo do canal e nome do palestrante.
 
     ``"Otávio Mandrá - Livre-Arbítrio: Você Está... | Espiritismo"`` →
-    ``"Livre-Arbítrio: Você Está..."``. O prefixo só sai quando parece um nome próprio
-    (2 a 6 palavras com inicial maiúscula, aceitando "de", "da", "dos"...).
+    ``"Livre-Arbítrio: Você Está..."``; ``"Palestra: O Pai Nosso - Matheus Toschi"`` →
+    ``"O Pai Nosso"``. O nome só sai quando parece um nome próprio (2 a 6 palavras com
+    inicial maiúscula, aceitando "de", "da", "dos"...).
     """
     texto = titulo.split(" | ")[0].strip() or titulo.strip()
-    m = _PREFIXO_NOME.match(texto)
-    if m:
-        palavras = m["nome"].split()
-        if 2 <= len(palavras) <= 6 and all(
-            p[0].isupper() or p.lower() in _CONECTIVOS for p in palavras
-        ):
-            texto = m["resto"].strip()
+    # "Palestra: Tema - Nome" (formato antigo) tem o nome no fim; "Nome - Tema", no início
+    rotulado = bool(_ROTULO.match(texto))
+    texto = _ROTULO.sub("", texto) or texto
+    formatos = [_SUFIXO_NOME, _PREFIXO_NOME] if rotulado else [_PREFIXO_NOME, _SUFIXO_NOME]
+    for formato in formatos:
+        m = formato.match(texto)
+        if m and _parece_nome(m["nome"]):
+            return m["resto"].strip()
     return texto
 
 
