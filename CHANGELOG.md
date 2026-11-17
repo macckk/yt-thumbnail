@@ -10,6 +10,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - `revisar --historico` mostra também os vídeos já decididos.
 - `revisar --servir [--porta 8765]`: abre a revisão por um servidor local (só 127.0.0.1, com token por sessão) e a página ganha botões **Aprovar esta**, **Rejeitar** e **Aprovar a variação 1 de todos**, sem copiar comandos para o PowerShell. O vídeo decidido sai da página na hora; Ctrl+C encerra. O envio ao YouTube continua sendo só pelo `enviar`.
 
+### Corrigido
+- `listar` (e `tudo`) lia só os 100 primeiros vídeos de playlists maiores: o yt-dlp passou a parar na primeira página sem avisar. Agora, quando a playlist informa mais vídeos do que o yt-dlp leu, os que faltam vêm da YouTube Data API (`playlistItems.list`, com o login do canal; ~1 unidade da cota por 50 vídeos). Vídeos privados e excluídos ficam de fora. Sem login, o `listar` avisa quantos ficaram de fora.
+
 ### Documentação
 - Docs revisados para o fluxo com `revisar --servir`: novo print da página de revisão (com os botões), exemplo de `config.yaml` com várias playlists e comparação de tempo entre `fonte_analise: transcricao` e `titulo` (`configuracao.md`), filtros `--job`/`--tipo` no `tudo` (`uso-cli.md`) e problemas comuns do servidor de revisão (`solucao-de-problemas.md`).
 

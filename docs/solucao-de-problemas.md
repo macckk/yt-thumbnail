@@ -61,6 +61,10 @@ Depois, como Administrador, `Restart-Service sshd`. O token é um segredo: não 
 - Confira se a playlist é **pública** ou **não listada** (privada não funciona sem login).
 - Atualize o yt-dlp: `pip install -U yt-dlp`. O YouTube muda com frequência e versões antigas param de funcionar.
 
+### A playlist tem mais vídeos do que o `listar` mostra (ex.: 100 de 242)
+
+O yt-dlp às vezes lê só a primeira página da playlist (100 vídeos), sem erro. O `listar` percebe pela contagem da playlist e completa a lista pela YouTube Data API, desde que o canal do job tenha login (`yt-thumbnail auth --canal <apelido>`). Se aparecer o aviso "o yt-dlp leu só N", faça o login e rode `listar` de novo. A contagem da playlist inclui vídeos privados e excluídos, que ficam de fora; por isso o total listado pode ser um pouco menor.
+
 ### `Sign in to confirm you're not a bot`
 
 O YouTube está bloqueando o acesso anônimo. Defina `ytdlp.cookies_navegador: firefox` (ou o navegador onde você está logado no YouTube) no `config.yaml`. No Chrome/Edge, feche o navegador antes, porque o arquivo de cookies fica bloqueado enquanto ele está aberto.

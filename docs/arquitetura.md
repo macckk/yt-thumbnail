@@ -52,7 +52,7 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 
 ## Fase 1 — Listagem e detecção de tipo
 
-1. `yt-dlp` com `extract_flat` lista os IDs da playlist (equivale a `yt-dlp --flat-playlist -J`).
+1. `yt-dlp` com `extract_flat` lista os IDs da playlist (equivale a `yt-dlp --flat-playlist -J`). Se ele ler menos do que o `playlist_count` informado (o yt-dlp às vezes para na primeira página, 100 vídeos), `completar` busca os IDs pela YouTube Data API (`playlistItems.list`, 50 por página, só `public`/`unlisted`) com o token do canal do job; a ordem passa a ser a da API.
 2. Para cada ID sem `meta.json` válido, uma chamada de metadados completa (sem download) traz duração, largura/altura, `channel_id`, título, descrição e URL da capa atual.
 3. Classificação (`playlist.classificar`):
    - duração > 180 s → **longo**;

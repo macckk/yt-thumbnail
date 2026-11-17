@@ -38,6 +38,8 @@ Lê a playlist de cada job com o yt-dlp (sem API key e sem baixar mídia), consu
 - **Short**: duração ≤ 180 s **e** vertical (altura > largura);
 - **longo**: todo o resto.
 
+Se a playlist informar mais vídeos do que o yt-dlp conseguiu ler (o yt-dlp às vezes para nos 100 primeiros, sem aviso), os IDs que faltam vêm da **YouTube Data API**, com o login do canal do job (`auth`). Custa ~1 unidade da cota por 50 vídeos e só acontece nesse caso. O resumo informa quantos vieram pela API; sem login, aparece um aviso com quantos ficaram de fora.
+
 Grava `saida/<job>/<video_id>/meta.json` e registra o vídeo como `listado`. Mostra uma tabela com tipo, duração, dimensões e título; vídeos de um tipo que não está em `tipos` do job aparecem como "fora do job" (são listados, mas as próximas etapas os ignoram). Avisa se algum vídeo não for do `channel_id` configurado para o canal do job.
 
 ```powershell
