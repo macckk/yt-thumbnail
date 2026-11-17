@@ -85,7 +85,7 @@ yt-thumbnail analisar --ids ID_DO_VIDEO --forcar
 
 Gera as imagens de fundo, **sem texto**, com o SDXL na GPU `gpu.imagem`, para os vídeos já analisados. Cada vídeo recebe `--variacoes` imagens (padrão `imagem.variacoes`, 3) com seeds diferentes, geradas na resolução nativa do tipo (1344×768 longo, 768×1344 Short) e ajustadas para a saída (1280×720 / 1080×1920). Grava `base_1..N.png` e `imagens.json` (seeds e parâmetros) e registra `imagens_geradas`.
 
-- O modelo é carregado uma vez por execução (~10 s; ~52 s por imagem numa RTX 3060 Ti); a primeira execução baixa o SDXL (~7 GB) do Hugging Face.
+- O modelo é carregado uma vez por execução (~10 s). Numa RTX 3060 Ti: ~52 s por imagem com duas GPUs; ~60–80 s com uma GPU só e `cpu_offload`. A primeira execução baixa o SDXL (~7 GB) do Hugging Face.
 - `--forcar` gera de novo com seeds novas.
 
 ```powershell
@@ -117,7 +117,7 @@ Nada é enviado ao YouTube sem passar por aqui.
 
 A página fica sempre limpa: `aprovar` e `rejeitar` a regravam na hora, tirando os vídeos decididos (basta recarregar o navegador). Quando não sobra nenhum, ela mostra "Nenhum vídeo aguardando revisão".
 
-A página mostra, por vídeo: selo LONGO/SHORT, título do vídeo (link para o YouTube), situação (aguardando, aprovada a variação N, rejeitado), título da capa e resumo da análise, a capa atual, as variações em tamanho real e em miniatura (320×180 ou 180×320, como aparecem na busca e nas sugestões), as métricas da composição (fonte, contraste, tamanho) e, ao lado de cada variação, o comando de aprovação com um botão **copiar**. Com `--historico`, os pendentes aparecem primeiro e a variação aprovada fica com borda verde.
+A página mostra, por vídeo: selo LONGO/SHORT, título do vídeo (link para o YouTube), situação (aguardando, aprovada a variação N, rejeitado), título da capa e resumo da análise, a capa atual, as variações em tamanho real e em miniatura (320×180 ou 180×320, como aparecem na busca e nas sugestões), as métricas da composição (fonte, contraste, tamanho) e, ao lado de cada variação, o botão **Aprovar esta** (com `--servir`) ou o comando de aprovação com um botão **copiar** (página aberta como arquivo). Com `--historico`, os pendentes aparecem primeiro e a variação aprovada fica com borda verde.
 
 ![Página de revisão](img/revisao.jpg)
 
@@ -134,7 +134,7 @@ Sobe um servidor local em `http://127.0.0.1:8765/` e abre a página por ele. Ass
 - Se a porta 8765 estiver ocupada (outra revisão aberta, por exemplo), use `--porta 8766`.
 - Aberta direto do arquivo (sem `--servir`), a página continua mostrando os comandos para copiar.
 
-Executando no PC das GPUs por SSH, use `--nao-abrir` e abra o arquivo lá, ou pela rede (a página usa caminhos relativos: copiar a pasta `saida/<job>` inteira também funciona).
+O `--servir` só aceita o navegador do próprio PC onde roda. Se você controla o PC das GPUs por SSH, rode o `revisar --servir` sentado nele (ou por Área de Trabalho Remota); pelo SSH, use `revisar --nao-abrir` e abra o arquivo `revisao.html` lá ou pela rede, copiando os comandos (a página usa caminhos relativos: copiar a pasta `saida/<job>` inteira também funciona).
 
 ### `yt-thumbnail aprovar ID [ID...] --variacao N [--job] [--forcar]`
 
@@ -192,11 +192,12 @@ Envia de volta a capa original (`capa_original.jpg`) e marca o vídeo como `reje
 
 Roda `listar → transcrever → analisar → gerar → compor → revisar` e **para na revisão** — o envio é sempre um comando à parte (`enviar --aprovados`).
 
-- Cada etapa só processa o que falta: rodar de novo continua de onde parou (inclusive depois de queda de energia ou erro).
+- Cada etapa só processa o que falta: rodar de novo continua de onde parou (inclusive depois de queda de energia ou erro). Vídeos já enviados, aprovados ou rejeitados não são refeitos; os que aguardam revisão só voltam à página.
 - Erro num vídeo não para o fluxo: fica no estado e aparece no resumo. Uma etapa que falha inteira (ex.: playlist inacessível) também não impede as seguintes de processar o que já existe. Só erro de configuração interrompe.
-- `--limite N`: no máximo N vídeos **novos** por etapa e por job (útil para lotes: `--limite 20` toda noite).
+- `--limite N`: no máximo N vídeos **novos** por etapa e por job (útil para lotes: `--limite 20` toda noite). Os já processados não contam.
+- `--job` e `--tipo`: só uma playlist e/ou só um formato (`longo` ou `short`).
 - `--ate gerar`: para depois da etapa indicada.
-- `--abrir`: abre a página de revisão no fim (padrão: não abre, pensando em execução por SSH ou agendada).
+- `--abrir`: abre a página de revisão (como arquivo) no fim. O padrão é não abrir, pensando em execução por SSH ou agendada; o resumo final sugere `revisar --servir` quando há vídeos aguardando.
 - No fim, um resumo: tempo de cada etapa e, por job, vídeos, quantos chegaram à revisão, pendentes, aprovados, enviados, não elegíveis e erros (com a etapa e a mensagem).
 - Tudo o que aparece no terminal vai também para `saida/logs/tudo-AAAAMMDD-HHMMSS.log`.
 
@@ -205,6 +206,16 @@ As etapas rodam **uma depois da outra**: com 8 GB de RAM, Whisper e SDXL carrega
 ```powershell
 yt-thumbnail tudo                      # todos os jobs, tudo o que falta
 yt-thumbnail tudo --job palestras --limite 10
+yt-thumbnail tudo --tipo short --limite 10            # só os Shorts, de todos os jobs
+yt-thumbnail tudo --job meditacoes --tipo longo       # só os longos de um job
+```
+
+Depois, o fluxo segue com a revisão e o envio:
+
+```powershell
+yt-thumbnail revisar --servir                 # aprove/rejeite pelos botões; Ctrl+C encerra
+yt-thumbnail enviar --aprovados --dry-run     # confira o que vai
+yt-thumbnail enviar --aprovados               # envia ao YouTube
 ```
 
 Para rodar todo dia sozinho, agende no **Agendador de Tarefas** do Windows: programa `C:\Users\<você>\yt-thumbnail\.venv\Scripts\yt-thumbnail.exe`, argumentos `tudo --limite 20`, iniciar em `C:\Users\<você>\yt-thumbnail`.

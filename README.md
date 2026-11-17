@@ -6,11 +6,11 @@ Gerador automático de capas (thumbnails) para playlists do YouTube, rodando **l
 
 Para cada vídeo (longo ou Short) de uma playlist pública dos seus canais, o yt-thumbnail:
 
-1. obtém a transcrição (legenda do YouTube ou `faster-whisper` na GPU);
+1. obtém a transcrição (legenda do YouTube ou `faster-whisper` na GPU) ou, se você preferir rapidez, usa só o título e a descrição;
 2. analisa o conteúdo com o Claude Code e escreve um prompt de imagem e um título curto, seguindo um **preset** de identidade visual;
 3. gera a imagem com **SDXL 1.0**, local e sem texto;
 4. escreve o título com Pillow, conferindo contraste e legibilidade em miniatura;
-5. monta uma página HTML para **revisão humana**, com a capa atual ao lado de 3 variações;
+5. monta uma página para **revisão humana**, com a capa atual ao lado de 3 variações e um botão para aprovar a escolhida;
 6. envia só as capas que você aprovou, pela YouTube Data API e no canal certo, guardando a capa original para poder voltar atrás.
 
 Shorts ganham capa vertical, com o título no quadrado central:

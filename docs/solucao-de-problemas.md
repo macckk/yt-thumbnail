@@ -174,7 +174,23 @@ Sem internet ou o YouTube recusou o pedido. A página é gerada mesmo assim ("ca
 
 ### O botão "copiar" não copia
 
-Alguns navegadores bloqueiam a área de transferência em páginas abertas como arquivo (`file://`). Selecione o comando e copie com Ctrl+C.
+Alguns navegadores bloqueiam a área de transferência em páginas abertas como arquivo (`file://`). Selecione o comando e copie com Ctrl+C, ou abra a revisão com `yt-thumbnail revisar --servir`, que troca os comandos por botões de aprovar.
+
+### `revisar --servir`: "não foi possível usar a porta 8765"
+
+Já há outra revisão aberta (outro terminal com `--servir`) ou outro programa usa a porta. Feche a outra revisão com Ctrl+C ou use outra porta: `revisar --servir --porta 8766`.
+
+### Ao clicar em "Aprovar esta": "Não deu certo... O servidor ainda está aberto?"
+
+O terminal do `revisar --servir` foi fechado ou encerrado com Ctrl+C. Rode o comando de novo; a página abre outra vez com os vídeos que ainda faltam.
+
+### Ao clicar: "token inválido; recarregue a página"
+
+O servidor foi reiniciado e a aba ainda é da execução anterior (cada execução usa um token novo). Recarregue a página (F5).
+
+### Os botões não aparecem, só os comandos
+
+A página foi aberta como arquivo (`file:///.../revisao.html`), não pelo servidor. Use o endereço que o `revisar --servir` mostra (`http://127.0.0.1:8765/...`).
 
 ### `está em mais de um job; use --job`
 

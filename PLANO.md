@@ -174,6 +174,7 @@ yt-thumbnail/
 │  ├─ imagem.py              # Fase 4
 │  ├─ composicao.py          # Fase 5
 │  ├─ revisao.py             # Fase 6
+│  ├─ servidor.py            # revisão com botões (revisar --servir), após a 0.1.0
 │  └─ youtube_api.py         # Fase 7
 ├─ scripts/
 │  ├─ check_env.py           # Fase 0
@@ -315,6 +316,8 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/uso-cli.md` (fluxo de revisão) + captura de tela em `docs/img/`.
 **Aceite:** aprovar/rejeitar funciona e o estado reflete a escolha.
 
+*Depois da 0.1.0:* a página mostra só os vídeos aguardando decisão (`--historico` mostra todos) e é regravada a cada `aprovar`/`rejeitar`; `revisar --servir` abre a página por um servidor local (só 127.0.0.1, com token) com botões **Aprovar esta**, **Rejeitar** e **Aprovar a variação 1 de todos**, sem copiar comandos.
+
 ### Fase 7 — Autenticação multicanal e envio ✅ concluída (2026-11-16)
 **Tarefas**
 - `yt-thumbnail auth --canal <apelido>` e `yt-thumbnail canais` (seção 4).
@@ -393,7 +396,8 @@ No início de cada sessão: pedir ao Claude Code para ler este `PLANO.md`, o `CH
 - [x] Identidade visual: preset **Espiritualidade** (seção 5)
 - [x] 3 variações por vídeo
 - [x] SDXL 1.0 base
-- [x] Revisão por HTML estático
+- [x] Revisão por HTML estático (e, depois da 0.1.0, servidor local opcional com botões: `revisar --servir`)
+- [x] Palestras longas: análise só pelo título e descrição (`fonte_analise: titulo`), sem transcrever; ~3,5 min por vídeo em vez de ~11
 - [x] Licença: GNU GPL v3.0
 - [x] Nome: **yt-thumbnail**
 - [x] Símbolos religiosos: sempre neutros

@@ -44,6 +44,7 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `imagem.py` | Fase 4: SDXL, variações e ajuste para a saída |
 | `composicao.py` | Fase 5: título sobre as imagens (Pillow), capas e miniaturas |
 | `revisao.py` | Fase 6: backup da capa atual, página de revisão, aprovar/rejeitar |
+| `servidor.py` | servidor local da revisão (`revisar --servir`): botões de aprovar/rejeitar |
 | `youtube_api.py` | Fase 7: OAuth por canal, envio e restauração |
 | `orquestracao.py` | Fase 8: `tudo`, liberação de memória entre etapas, resumo do estado |
 | `ambiente.py` | verificação do ambiente |

@@ -108,6 +108,41 @@ Lista de associações playlist → canal → preset.
 
 Todos os vídeos da playlist são listados e classificados, mas só os tipos em `tipos` seguem para as próximas etapas. Os outros aparecem como "fora do job" no `yt-thumbnail listar`.
 
+### Exemplo com várias playlists
+
+Cada playlist é um job. Vários jobs podem usar o mesmo canal e o mesmo preset:
+
+```yaml
+jobs:
+  - nome: meditacoes                 # longos e Shorts, análise pela transcrição
+    playlist: https://www.youtube.com/playlist?list=PL...
+    canal: espiritual-principal
+    preset: espiritualidade
+    tipos: [longo, short]
+
+  - nome: palestras                  # palestras de ~40 min: só título e descrição
+    playlist: https://www.youtube.com/playlist?list=PL...
+    canal: espiritual-principal
+    preset: espiritualidade
+    tipos: [longo]
+    fonte_analise: titulo
+
+  - nome: videos                     # só longos, análise pela transcrição
+    playlist: https://www.youtube.com/playlist?list=PL...
+    canal: espiritual-principal
+    preset: espiritualidade
+    tipos: [longo]
+```
+
+Para incluir uma playlist nova, acrescente um bloco no fim, rode `yt-thumbnail validar` e depois `yt-thumbnail tudo --job <nome> --limite 3` para medir o tempo por vídeo. Um vídeo que esteja em duas playlists configuradas existe nos dois jobs; nos comandos por ID, informe qual com `--job`.
+
+### Transcrição ou só o título?
+
+| `fonte_analise` | Tempo por vídeo (RTX 3060 Ti, 1 GPU) | Quando usar |
+|---|---|---|
+| `transcricao` | vídeo curto: ~4–5 min. Palestra de ~40 min: ~11 min | o tema só aparece na fala; títulos genéricos |
+| `titulo` | ~3,5 min (quase tudo é a geração das 3 imagens) | o título já diz o tema (ex.: "Nome - Tema \| Canal") |
+
 ## Arquivos gerados
 
 - `saida/estado.db`: estado de cada vídeo (SQLite), ver [arquitetura.md](arquitetura.md).

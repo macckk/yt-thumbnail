@@ -10,6 +10,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - `revisar --historico` mostra também os vídeos já decididos.
 - `revisar --servir [--porta 8765]`: abre a revisão por um servidor local (só 127.0.0.1, com token por sessão) e a página ganha botões **Aprovar esta**, **Rejeitar** e **Aprovar a variação 1 de todos**, sem copiar comandos para o PowerShell. O vídeo decidido sai da página na hora; Ctrl+C encerra. O envio ao YouTube continua sendo só pelo `enviar`.
 
+### Documentação
+- Docs revisados para o fluxo com `revisar --servir`: novo print da página de revisão (com os botões), exemplo de `config.yaml` com várias playlists e comparação de tempo entre `fonte_analise: transcricao` e `titulo` (`configuracao.md`), filtros `--job`/`--tipo` no `tudo` (`uso-cli.md`) e problemas comuns do servidor de revisão (`solucao-de-problemas.md`).
+
 ### Alterado
 - A página de revisão mostra só os vídeos aguardando decisão, e `aprovar`/`rejeitar` a regravam na hora (o vídeo decidido sai da página). O backup da capa atual continua sendo baixado também para os aprovados.
 
