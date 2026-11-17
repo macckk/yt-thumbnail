@@ -3,6 +3,10 @@
 
 Para cada vídeo grava ``<saida>/<job>/<video_id>/meta.json`` e registra o status ``listado``.
 Nenhuma mídia é baixada.
+
+O yt-dlp às vezes lê só a primeira página da playlist (100 vídeos) sem avisar. Quando o total
+informado pela playlist é maior que o lido, a lista de IDs é completada por outra fonte
+(``completar``; na CLI, a YouTube Data API com o login do canal).
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import parse_qs, urlsplit
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
@@ -27,6 +32,9 @@ DURACAO_MAX_SHORT = 180
 
 Extrator = Callable[[str, dict[str, Any]], dict[str, Any]]
 """Assinatura de uma função que devolve o ``info_dict`` do yt-dlp para uma URL."""
+
+CompletarPlaylist = Callable[[str], list[str]]
+"""Recebe o ID da playlist e devolve os IDs de todos os vídeos disponíveis, em ordem."""
 
 
 class ErroPlaylist(Exception):
@@ -63,6 +71,12 @@ class ResultadoListagem:
     existentes: list[Meta] = field(default_factory=list)
     erros: dict[str, str] = field(default_factory=dict)
     canal_divergente: list[Meta] = field(default_factory=list)
+    total_informado: int | None = None
+    """Quantos vídeos a playlist diz ter (``playlist_count``; inclui os indisponíveis)."""
+    lidos_ytdlp: int = 0
+    completada_por: int = 0
+    """Quantos IDs vieram de ``completar`` porque o yt-dlp não os leu."""
+    aviso: str | None = None
 
     @property
     def todos(self) -> list[Meta]:
@@ -110,8 +124,16 @@ def url_video(video_id: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}"
 
 
-def listar_entradas(url_playlist: str, extrair: Extrator, opcoes: dict[str, Any]) -> list[dict]:
-    """Lista as entradas da playlist (equivale a ``yt-dlp --flat-playlist -J``).
+def id_playlist(url_playlist: str) -> str | None:
+    """O parâmetro ``list=`` da URL."""
+    valores = parse_qs(urlsplit(url_playlist).query).get("list")
+    return valores[0] if valores else None
+
+
+def listar_entradas(
+    url_playlist: str, extrair: Extrator, opcoes: dict[str, Any]
+) -> tuple[list[dict], int | None]:
+    """Entradas da playlist (como ``yt-dlp --flat-playlist -J``) e o total que ela informa.
 
     Raises:
         ErroPlaylist: se a playlist não puder ser lida.
@@ -124,7 +146,47 @@ def listar_entradas(url_playlist: str, extrair: Extrator, opcoes: dict[str, Any]
             "(ou não listada) e atualize o yt-dlp: pip install -U yt-dlp"
         ) from e
     entradas = [e for e in (info.get("entries") or []) if e and e.get("id")]
-    return entradas
+    total = info.get("playlist_count")
+    return entradas, (int(total) if isinstance(total, int | float) else None)
+
+
+def _completar_entradas(
+    entradas: list[dict],
+    total: int | None,
+    url_playlist: str,
+    completar: CompletarPlaylist | None,
+    resultado: ResultadoListagem,
+) -> list[dict]:
+    """Completa a lista quando o yt-dlp leu menos vídeos do que a playlist informa."""
+    resultado.lidos_ytdlp, resultado.total_informado = len(entradas), total
+    if not total or len(entradas) >= total:
+        return entradas
+    faltam = f"a playlist informa {total} vídeos, mas o yt-dlp leu só {len(entradas)}"
+    pl = id_playlist(url_playlist)
+    if completar is None or pl is None:
+        resultado.aviso = (
+            f"{faltam}. Para completar pela YouTube Data API, faça o login do canal "
+            "(`yt-thumbnail auth --canal <apelido>`)."
+        )
+        return entradas
+    try:
+        ids = completar(pl)
+    except Exception as e:  # noqa: BLE001 - qualquer falha da API vira aviso
+        resultado.aviso = f"{faltam}, e a YouTube Data API falhou: {e}"
+        return entradas
+    conhecidos = {e["id"] for e in entradas}
+    novos = [v for v in dict.fromkeys(ids) if v not in conhecidos]
+    if not novos:
+        resultado.aviso = (
+            f"{faltam}; a YouTube Data API não trouxe outros (o resto deve ser privado ou "
+            "excluído)."
+        )
+        return entradas
+    resultado.completada_por = len(novos)
+    ordem = {v: i for i, v in enumerate(ids)}
+    fim = len(ordem)
+    juntas = entradas + [{"id": v} for v in novos]
+    return sorted(juntas, key=lambda e: ordem.get(e["id"], fim))
 
 
 # --------------------------------------------------------------------------- tipo
@@ -267,11 +329,14 @@ def listar_job(
     opcoes: dict[str, Any] | None = None,
     verificar_shorts: Callable[[str], bool | None] | None = None,
     ao_progredir: Callable[[str, int, int], None] | None = None,
+    completar: CompletarPlaylist | None = None,
 ) -> ResultadoListagem:
     """Lista a playlist do job, grava ``meta.json`` e registra cada vídeo como ``listado``.
 
     Idempotente: vídeos com ``meta.json`` válido não são consultados de novo (a menos que
-    ``forcar``). Erros por vídeo são registrados no estado sem interromper o lote.
+    ``forcar``). Erros por vídeo são registrados no estado sem interromper o lote. Se o
+    yt-dlp ler menos vídeos do que a playlist informa, ``completar`` (se dado) traz os IDs
+    que faltam.
 
     Raises:
         ErroPlaylist: se a própria playlist não puder ser lida.
@@ -280,8 +345,9 @@ def listar_job(
     verificar_shorts = verificar_shorts or eh_url_shorts
     opcoes = opcoes if opcoes is not None else opcoes_ytdlp()
     filtro = set(ids) if ids else None
-    entradas = listar_entradas(url_playlist, extrair, opcoes)
+    entradas, total_informado = listar_entradas(url_playlist, extrair, opcoes)
     resultado = ResultadoListagem()
+    entradas = _completar_entradas(entradas, total_informado, url_playlist, completar, resultado)
     total = len(entradas)
     for indice, entrada in enumerate(entradas, start=1):
         video_id = entrada["id"]

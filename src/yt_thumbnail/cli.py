@@ -174,6 +174,7 @@ def listar(
                         ids=_ids(ids),
                         opcoes=opcoes_ytdlp(cfg.ytdlp.cookies_navegador),
                         ao_progredir=progresso,
+                        completar=_completador_playlist(cfg, canal.channel_id),
                     )
                 except ErroPlaylist as e:
                     console.print(f"[red]Erro no job {j.nome}:[/] {e}")
@@ -208,6 +209,13 @@ def listar(
             )
             for vid, msg in r.erros.items():
                 console.print(f"  [red]erro[/] {vid}: {escape(msg)}")
+            if r.completada_por:
+                console.print(
+                    f"  A playlist informa {r.total_informado} vídeos; o yt-dlp leu "
+                    f"{r.lidos_ytdlp} e os outros {r.completada_por} vieram pela YouTube Data API."
+                )
+            if r.aviso:
+                console.print(f"[yellow]Aviso:[/] {escape(r.aviso)}")
             if r.canal_divergente:
                 console.print(
                     f"[yellow]Aviso:[/] {len(r.canal_divergente)} vídeo(s) não são do canal "
@@ -216,6 +224,17 @@ def listar(
             falhou = falhou or bool(r.erros)
     if falhou:
         raise typer.Exit(1)
+
+
+def _completador_playlist(cfg: Config, channel_id: str | None):  # noqa: ANN202
+    """IDs da playlist pela YouTube Data API (só é chamado se o yt-dlp ler a lista pela metade)."""
+    if not channel_id:
+        return None
+
+    def completar(playlist_id: str) -> list[str]:
+        return _api_do_canal(cfg, channel_id).ids_da_playlist(playlist_id)
+
+    return completar
 
 
 OpcaoTipo = Annotated[

@@ -195,6 +195,35 @@ class ApiYouTube:
         itens = resp.get("items") or []
         return itens[0]["snippet"]["channelId"] if itens else None
 
+    def ids_da_playlist(self, playlist_id: str) -> list[str]:
+        """IDs dos vídeos públicos e não listados da playlist, em ordem (1 unidade por 50)."""
+        return ids_da_playlist(self.api, playlist_id)
+
+
+def ids_da_playlist(api: Any, playlist_id: str) -> list[str]:
+    """``playlistItems.list`` paginado; pula vídeos privados e excluídos."""
+    ids: list[str] = []
+    pagina: str | None = None
+    while True:
+        resp = (
+            api.playlistItems()
+            .list(
+                part="contentDetails,status",
+                playlistId=playlist_id,
+                maxResults=50,
+                pageToken=pagina,
+            )
+            .execute()
+        )
+        for item in resp.get("items") or []:
+            privacidade = (item.get("status") or {}).get("privacyStatus")
+            video_id = (item.get("contentDetails") or {}).get("videoId")
+            if video_id and privacidade in ("public", "unlisted"):
+                ids.append(video_id)
+        pagina = resp.get("nextPageToken")
+        if not pagina:
+            return list(dict.fromkeys(ids))
+
 
 def classificar_erro_http(e: Exception) -> tuple[int | None, str, str]:
     """(status HTTP, motivo, mensagem) de um ``HttpError`` da API."""

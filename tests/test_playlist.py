@@ -196,3 +196,112 @@ def test_meta_corrompido_e_refeito(tmp_path: Path) -> None:
             verificar_shorts=_sem_rede,
         )
     assert [m.video_id for m in r.novos] == ["longo01"]
+
+
+class PlaylistCortada(FakeYtDlp):
+    """yt-dlp que lê só os 2 primeiros vídeos, mas informa o total (como no bug do YouTube)."""
+
+    def __call__(self, url: str, opcoes: dict[str, Any]) -> dict[str, Any]:
+        info = super().__call__(url, opcoes)
+        if "list=" in url:
+            info = {"entries": info["entries"][:2], "playlist_count": len(self.videos) + 1}
+        return info
+
+
+def _listar_cortada(tmp_path: Path, estado, completar):  # noqa: ANN001, ANN202
+    return listar_job(
+        job="j",
+        url_playlist=PLAYLIST,
+        pasta_saida=tmp_path,
+        estado=estado,
+        extrair=PlaylistCortada(VIDEOS),
+        opcoes={},
+        verificar_shorts=_sem_rede,
+        completar=completar,
+    )
+
+
+def test_playlist_cortada_completada_pela_api(tmp_path: Path) -> None:
+    pedidos: list[str] = []
+
+    def completar(playlist_id: str) -> list[str]:
+        pedidos.append(playlist_id)
+        return ["vert_lg", "longo01", "short01", "curto_h"]  # ordem da API
+
+    with abrir_estado(tmp_path) as estado:
+        r = _listar_cortada(tmp_path, estado, completar)
+        assert pedidos == ["PLteste"]
+        assert (r.total_informado, r.lidos_ytdlp, r.completada_por) == (5, 2, 2)
+        assert r.aviso is None
+        assert [m.video_id for m in r.todos] == ["vert_lg", "longo01", "short01", "curto_h"]
+        assert len(estado.listar("j")) == 4
+
+
+def test_playlist_cortada_sem_api(tmp_path: Path) -> None:
+    def quebra(playlist_id: str) -> list[str]:
+        raise RuntimeError("sem login para o canal")
+
+    with abrir_estado(tmp_path) as estado:
+        r = _listar_cortada(tmp_path, estado, None)
+        assert len(r.todos) == 2 and "yt-dlp leu só 2" in (r.aviso or "")
+        assert "auth" in (r.aviso or "")
+        r = _listar_cortada(tmp_path, estado, quebra)
+        assert len(r.todos) == 2 and "sem login" in (r.aviso or "")
+        r = _listar_cortada(tmp_path, estado, lambda pl: ["longo01", "short01"])
+        assert len(r.todos) == 2 and "privado" in (r.aviso or "")
+
+
+def test_playlist_completa_nao_chama_api(tmp_path: Path) -> None:
+    def nao_chamar(playlist_id: str) -> list[str]:
+        raise AssertionError("não deveria chamar a API")
+
+    with abrir_estado(tmp_path) as estado:
+        r = listar_job(
+            job="j",
+            url_playlist=PLAYLIST,
+            pasta_saida=tmp_path,
+            estado=estado,
+            extrair=FakeYtDlp(VIDEOS),
+            opcoes={},
+            verificar_shorts=_sem_rede,
+            completar=nao_chamar,
+        )
+    assert len(r.todos) == 4 and r.aviso is None and not r.completada_por
+
+
+def test_ids_da_playlist_pagina_e_filtra() -> None:
+    from yt_thumbnail.youtube_api import ids_da_playlist
+
+    paginas = {
+        None: {
+            "items": [
+                {"contentDetails": {"videoId": "a"}, "status": {"privacyStatus": "public"}},
+                {"contentDetails": {"videoId": "b"}, "status": {"privacyStatus": "private"}},
+            ],
+            "nextPageToken": "p2",
+        },
+        "p2": {
+            "items": [
+                {"contentDetails": {"videoId": "c"}, "status": {"privacyStatus": "unlisted"}},
+                {"contentDetails": {}, "status": {"privacyStatus": "privacyStatusUnspecified"}},
+                {"contentDetails": {"videoId": "a"}, "status": {"privacyStatus": "public"}},
+            ]
+        },
+    }
+    chamadas: list[dict] = []
+
+    class Api:
+        def playlistItems(self):  # noqa: N802, ANN202
+            return self
+
+        def list(self, **kw):  # noqa: ANN003, ANN202
+            chamadas.append(kw)
+            self.resp = paginas[kw["pageToken"]]
+            return self
+
+        def execute(self):  # noqa: ANN202
+            return self.resp
+
+    assert ids_da_playlist(Api(), "PLx") == ["a", "c"]
+    assert [c["pageToken"] for c in chamadas] == [None, "p2"]
+    assert all(c["playlistId"] == "PLx" and c["maxResults"] == 50 for c in chamadas)
