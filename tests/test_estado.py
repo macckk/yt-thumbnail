@@ -51,3 +51,12 @@ def test_listar_filtros_e_persistencia(tmp_path: Path) -> None:
         assert [r.video_id for r in e.listar("j", tipo="short")] == ["b"]
         assert e.listar("j", status="enviado") == []
         assert e.obter("j", "zzz") is None
+
+
+def test_listar_mais_recentes_primeiro(tmp_path: Path) -> None:
+    with abrir_estado(tmp_path) as e:
+        e.registrar("j", "sem-data", "listado")
+        e.registrar("j", "antigo", "listado", dados={"data_publicacao": "2025-01-10"})
+        e.registrar("j", "novo", "listado", dados={"data_publicacao": "2026-11-15"})
+        e.registrar("j", "meio", "listado", dados={"data_publicacao": "2026-03-02"})
+        assert [r.video_id for r in e.listar("j")] == ["novo", "meio", "antigo", "sem-data"]

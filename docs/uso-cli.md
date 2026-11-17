@@ -64,7 +64,7 @@ Em jobs com `fonte_analise: titulo` (ver [configuracao.md](configuracao.md#jobs)
 |---|---|
 | `--tipo` | só `longo` ou só `short` |
 | `--forcar-whisper` | ignora a legenda e transcreve com o Whisper (útil quando a legenda automática é ruim) |
-| `--limite N` | processa no máximo N vídeos pendentes (bom para testar) |
+| `--limite N` | processa no máximo N vídeos pendentes, dos publicados mais recentemente para os mais antigos (bom para testar) |
 
 ```powershell
 yt-thumbnail transcrever --job palestras --limite 3

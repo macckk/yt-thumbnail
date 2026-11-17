@@ -379,7 +379,11 @@ def listar_job(
             "listado",
             tipo=meta.tipo,
             titulo=meta.titulo,
-            dados={"channel_id": meta.channel_id, "indice_playlist": indice},
+            dados={
+                "channel_id": meta.channel_id,
+                "indice_playlist": indice,
+                "data_publicacao": meta.data_publicacao,
+            },
             permitir_regredir=False,
         )
         if channel_id_esperado and meta.channel_id and meta.channel_id != channel_id_esperado:

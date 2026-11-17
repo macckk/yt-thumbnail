@@ -17,6 +17,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - Docs revisados para o fluxo com `revisar --servir`: novo print da página de revisão (com os botões), exemplo de `config.yaml` com várias playlists e comparação de tempo entre `fonte_analise: transcricao` e `titulo` (`configuracao.md`), filtros `--job`/`--tipo` no `tudo` (`uso-cli.md`) e problemas comuns do servidor de revisão (`solucao-de-problemas.md`).
 
 ### Alterado
+- Todas as etapas (e o `--limite`) processam primeiro os vídeos **publicados mais recentemente**, pela data de publicação gravada pelo `listar`. Antes a ordem era a da listagem, e um Short novo podia ficar atrás de dezenas de antigos. Vídeos listados antes desta versão ganham a data no próximo `listar`/`tudo`.
 - A página de revisão mostra só os vídeos aguardando decisão, e `aprovar`/`rejeitar` a regravam na hora (o vídeo decidido sai da página). O backup da capa atual continua sendo baixado também para os aprovados.
 
 ## [0.1.0] — 2026-11-16

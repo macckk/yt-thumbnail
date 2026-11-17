@@ -119,7 +119,7 @@ class Estado:
     def listar(
         self, job: str, *, status: str | None = None, tipo: str | None = None
     ) -> list[RegistroVideo]:
-        """Lista os vídeos de um job, opcionalmente filtrando por status e tipo."""
+        """Vídeos de um job (mais recentes primeiro), opcionalmente filtrando por status e tipo."""
         sql = "SELECT * FROM videos WHERE job = ?"
         args: list[Any] = [job]
         if status is not None:
@@ -128,7 +128,11 @@ class Estado:
         if tipo is not None:
             sql += " AND tipo = ?"
             args.append(tipo)
-        sql += " ORDER BY criado_em, video_id"
+        # Mais recentes primeiro (data de publicação gravada pelo `listar`); sem data, no fim.
+        sql += (
+            " ORDER BY json_extract(dados, '$.data_publicacao') IS NULL,"
+            " json_extract(dados, '$.data_publicacao') DESC, criado_em, video_id"
+        )
         return [_registro(r) for r in self._con.execute(sql, args)]
 
     def registrar(
