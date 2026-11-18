@@ -6,6 +6,7 @@ Fluxo de status (ver ``docs/arquitetura.md``)::
     listado → transcrito → analisado → imagens_geradas → capas_compostas → aprovado → enviado
                                                                           ↘ rejeitado
                                                          aprovado → nao_elegivel
+    (qualquer um antes de aprovado) → ignorado   (``selecionar``: não trocar a capa)
 
 Erros não mudam o status: ficam em ``erro``/``mensagem``/``tentativas`` até a etapa dar certo.
 """
@@ -31,6 +32,7 @@ Status = Literal[
     "rejeitado",
     "enviado",
     "nao_elegivel",
+    "ignorado",
 ]
 
 ORDEM: dict[str, int] = {
@@ -43,6 +45,7 @@ ORDEM: dict[str, int] = {
     "rejeitado": 5,
     "enviado": 6,
     "nao_elegivel": 6,
+    "ignorado": 6,
 }
 
 _ESQUEMA = """
@@ -117,14 +120,25 @@ class Estado:
         return _registro(linha) if linha else None
 
     def listar(
-        self, job: str, *, status: str | None = None, tipo: str | None = None
+        self,
+        job: str,
+        *,
+        status: str | None = None,
+        tipo: str | None = None,
+        incluir_ignorados: bool = False,
     ) -> list[RegistroVideo]:
-        """Vídeos de um job (mais recentes primeiro), opcionalmente filtrando por status e tipo."""
+        """Vídeos de um job (mais recentes primeiro), opcionalmente filtrando por status e tipo.
+
+        Os ``ignorado`` ficam de fora (nenhuma etapa os processa), a menos que
+        ``incluir_ignorados`` ou ``status="ignorado"``.
+        """
         sql = "SELECT * FROM videos WHERE job = ?"
         args: list[Any] = [job]
         if status is not None:
             sql += " AND status = ?"
             args.append(status)
+        elif not incluir_ignorados:
+            sql += " AND status != 'ignorado'"
         if tipo is not None:
             sql += " AND tipo = ?"
             args.append(tipo)

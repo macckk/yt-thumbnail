@@ -661,7 +661,12 @@ def revisar(
 
 
 def _servir_revisao(
-    cfg: Config, tipos_por_job: dict[str, list[str]], porta: int, abrir: bool
+    cfg: Config,
+    tipos_por_job: dict[str, list[str]],
+    porta: int,
+    abrir: bool,
+    *,
+    pagina: str = "revisao.html",
 ) -> None:
     import webbrowser
 
@@ -675,6 +680,7 @@ def _servir_revisao(
             tipos_por_job,
             porta,
             ao_decidir=lambda msg: console.print(f"  {escape(msg)}"),
+            pagina_inicial=pagina,
         )
     except OSError as e:
         console.print(
@@ -682,10 +688,17 @@ def _servir_revisao(
             "Outra revisão já está aberta? Feche-a ou use --porta."
         )
         raise typer.Exit(1) from e
+    revisao = pagina == "revisao.html"
     with servidor:
         console.print(
-            f"\n[bold]Revisão aberta em {servidor.url()}[/] — aprove e rejeite pelos botões "
-            "da página.\nDeixe esta janela aberta enquanto revisa; [bold]Ctrl+C[/] encerra."
+            (
+                f"\n[bold]Revisão aberta em {servidor.url()}[/] — aprove e rejeite pelos "
+                "botões da página."
+                if revisao
+                else f"\n[bold]Seleção aberta em {servidor.url()}[/] — marque os vídeos que "
+                "não devem ganhar capa nova."
+            )
+            + "\nDeixe esta janela aberta enquanto usa a página; [bold]Ctrl+C[/] encerra."
         )
         if abrir:
             for nome in tipos_por_job:
@@ -693,7 +706,86 @@ def _servir_revisao(
         try:
             servidor.serve_forever()
         except KeyboardInterrupt:
-            console.print("Revisão encerrada. Próximo passo: `enviar --aprovados --dry-run`.")
+            console.print(
+                "Revisão encerrada. Próximo passo: `enviar --aprovados --dry-run`."
+                if revisao
+                else "Seleção encerrada. Próximo passo: `tudo --limite 10`."
+            )
+
+
+@app.command()
+def selecionar(
+    ids: ArgIds = None,
+    ignorar: Annotated[
+        bool, typer.Option("--ignorar", help="Tira os IDs informados da fila (sem capa nova).")
+    ] = False,
+    incluir: Annotated[
+        bool, typer.Option("--incluir", help="Devolve à fila os IDs informados.")
+    ] = False,
+    job: OpcaoJob = None,
+    tipo: OpcaoTipo = None,
+    abrir: Annotated[
+        bool, typer.Option("--abrir/--nao-abrir", help="Abre a página no navegador.")
+    ] = True,
+    porta: Annotated[
+        int, typer.Option("--porta", min=0, max=65535, help="Porta do servidor local.")
+    ] = 8765,
+    config: OpcaoConfig = None,
+) -> None:
+    """Escolhe quais vídeos ainda sem capa nova vão ganhar uma.
+
+    Sem IDs, abre uma página (servidor só em 127.0.0.1) com os vídeos da fila, dos mais
+    recentes para os mais antigos: marque os que NÃO devem trocar de capa e clique no botão.
+    Os ignorados nunca são processados nem enviados. Pela linha de comando:
+    `selecionar ID... --ignorar` e `selecionar ID... --incluir`.
+    """
+    from rich.markup import escape
+
+    from yt_thumbnail.estado import abrir_estado
+    from yt_thumbnail.selecao import PAGINA_SELECAO, ErroSelecao, itens_selecao
+    from yt_thumbnail.selecao import ignorar as ignorar_video
+    from yt_thumbnail.selecao import incluir as incluir_video
+
+    if ignorar and incluir:
+        raise typer.BadParameter("use --ignorar ou --incluir, não os dois.")
+    if bool(ids) != (ignorar or incluir):
+        raise typer.BadParameter(
+            "informe os IDs com --ignorar ou --incluir; sem IDs, abre a página de seleção."
+        )
+    cfg = _carregar(config)
+    selecionados = _jobs_selecionados(cfg, job)
+    with abrir_estado(cfg.pasta_saida) as estado:
+        if ids:
+            funcao = ignorar_video if ignorar else incluir_video
+            falhou = False
+            alvos = []
+            for vid in ids:
+                nome_job = _resolver_job(cfg, estado, job, vid)
+                try:
+                    r = funcao(estado, nome_job, vid)
+                except ErroSelecao as e:
+                    console.print(f"[red]erro[/] {escape(str(e))}")
+                    falhou = True
+                    continue
+                alvos.append(nome_job)
+                situacao = "fora da fila (fica com a capa atual)" if ignorar else "na fila"
+                console.print(f"[green]ok[/] {nome_job}/{vid}: {situacao} ({r.status})")
+            _atualizar_paginas(cfg, estado, alvos)
+            if falhou:
+                raise typer.Exit(1)
+            return
+        for j in selecionados:
+            fila, ignorados = itens_selecao(estado, cfg.pasta_saida, j.nome, _tipos_do_job(j, tipo))
+            console.print(
+                f"[bold]{j.nome}[/]: {len(fila)} vídeo(s) na fila, {len(ignorados)} ignorado(s)."
+            )
+    _servir_revisao(
+        cfg,
+        {j.nome: _tipos_do_job(j, tipo) for j in selecionados},
+        porta,
+        abrir,
+        pagina=PAGINA_SELECAO,
+    )
 
 
 def _atualizar_paginas(cfg: Config, estado, jobs: Iterable[str]) -> None:  # noqa: ANN001

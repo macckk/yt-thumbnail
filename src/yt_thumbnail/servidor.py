@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Servidor local da revisão: aprovar e rejeitar pelos botões da página.
+"""Servidor local da revisão e da seleção: decidir pelos botões das páginas.
 
 ``yt-thumbnail revisar --servir`` serve ``saida/<job>/revisao.html`` em
 ``http://127.0.0.1:<porta>/`` e recebe as decisões por ``POST /api/...``, gravando no
 mesmo estado que os comandos ``aprovar`` e ``rejeitar``. Depois de cada decisão a página é
-regravada (só os pendentes).
+regravada (só os pendentes). ``yt-thumbnail selecionar`` usa o mesmo servidor para a página
+``selecao.html`` (montada na hora), onde se escolhe quais vídeos não terão capa nova.
 
 Segurança: escuta só em 127.0.0.1, confere o cabeçalho ``Host`` (contra DNS rebinding) e
 exige, em todo POST, um token aleatório que só vai dentro da página servida. Só serve
-``revisao.html`` e imagens das pastas dos jobs configurados. Nada aqui envia capas ao
-YouTube: o envio continua sendo ``enviar --aprovados``.
+``revisao.html``, ``selecao.html`` e imagens das pastas dos jobs configurados. Nada aqui
+envia capas ao YouTube: o envio continua sendo ``enviar --aprovados``.
 """
 
 from __future__ import annotations
@@ -25,11 +26,20 @@ from urllib.parse import unquote, urlsplit
 
 from yt_thumbnail.estado import abrir_estado
 from yt_thumbnail.revisao import ErroRevisao, aprovar, pendentes, preparar_revisao, rejeitar
+from yt_thumbnail.selecao import (
+    PAGINA_SELECAO,
+    ErroSelecao,
+    ignorar,
+    incluir,
+    itens_selecao,
+    montar_pagina,
+)
 
 PORTA_PADRAO = 8765
 PAGINA = "revisao.html"
 TIPOS_IMAGEM = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
-TAMANHO_MAXIMO_POST = 16 * 1024
+TAMANHO_MAXIMO_POST = 256 * 1024
+MAXIMO_VIDEOS_POR_PEDIDO = 2000
 
 
 class ServidorRevisao(HTTPServer):
@@ -43,8 +53,10 @@ class ServidorRevisao(HTTPServer):
         *,
         token: str | None = None,
         ao_decidir: Callable[[str], None] | None = None,
+        pagina_inicial: str = PAGINA,
     ) -> None:
         self.pasta_saida = pasta_saida
+        self.pagina_inicial = pagina_inicial
         self.tipos_por_job = dict(tipos_por_job)
         self.token = token or secrets.token_urlsafe(24)
         self.ao_decidir = ao_decidir
@@ -54,9 +66,9 @@ class ServidorRevisao(HTTPServer):
     def porta(self) -> int:
         return self.server_address[1]
 
-    def url(self, job: str | None = None) -> str:
+    def url(self, job: str | None = None, pagina: str | None = None) -> str:
         base = f"http://127.0.0.1:{self.porta}/"
-        return base + (f"{job}/{PAGINA}" if job else "")
+        return base + (f"{job}/{pagina or self.pagina_inicial}" if job else "")
 
     def regravar_pagina(self, estado, job: str) -> int:  # noqa: ANN001
         """Regrava a página do job (sem rede) e devolve quantos ainda aguardam."""
@@ -116,6 +128,9 @@ class _Pedido(BaseHTTPRequestHandler):
         if partes[1:] == [PAGINA]:
             self._pagina(job)
             return
+        if partes[1:] == [PAGINA_SELECAO]:
+            self._pagina_selecao(job)
+            return
         pasta_job = (self.server.pasta_saida / job).resolve()
         arquivo = pasta_job.joinpath(*partes[1:]).resolve()
         tipo = TIPOS_IMAGEM.get(arquivo.suffix.lower())
@@ -130,17 +145,20 @@ class _Pedido(BaseHTTPRequestHandler):
         jobs = list(self.server.tipos_por_job)
         if len(jobs) == 1:
             self.send_response(HTTPStatus.FOUND)
-            self.send_header("Location", f"/{jobs[0]}/{PAGINA}")
+            self.send_header("Location", f"/{jobs[0]}/{self.server.pagina_inicial}")
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
         itens = "".join(
-            f"<li><a href='/{html.escape(j)}/{PAGINA}'>{html.escape(j)}</a></li>" for j in jobs
+            f"<li><strong>{html.escape(j)}</strong>: "
+            f"<a href='/{html.escape(j)}/{PAGINA_SELECAO}'>escolher vídeos</a> · "
+            f"<a href='/{html.escape(j)}/{PAGINA}'>revisar capas</a></li>"
+            for j in jobs
         )
         corpo = (
-            "<!doctype html><meta charset='utf-8'><title>Revisão</title>"
-            "<body style='font-family:system-ui;padding:16px'>"
-            f"<h1>Revisão das capas</h1><ul>{itens}</ul></body>"
+            "<!doctype html><meta charset='utf-8'><title>yt-thumbnail</title>"
+            "<body style='font-family:system-ui;padding:16px;line-height:1.8'>"
+            f"<h1>yt-thumbnail</h1><ul>{itens}</ul></body>"
         )
         self._enviar(HTTPStatus.OK, corpo.encode("utf-8"), "text/html; charset=utf-8")
 
@@ -149,7 +167,15 @@ class _Pedido(BaseHTTPRequestHandler):
         if not arquivo.is_file():
             with abrir_estado(self.server.pasta_saida) as estado:
                 self.server.regravar_pagina(estado, job)
-        texto = arquivo.read_text(encoding="utf-8")
+        self._enviar_pagina(arquivo.read_text(encoding="utf-8"))
+
+    def _pagina_selecao(self, job: str) -> None:
+        tipos = self.server.tipos_por_job[job]
+        with abrir_estado(self.server.pasta_saida) as estado:
+            fila, ignorados = itens_selecao(estado, self.server.pasta_saida, job, tipos)
+        self._enviar_pagina(montar_pagina(job, fila, ignorados))
+
+    def _enviar_pagina(self, texto: str) -> None:
         meta = f'<meta name="yt-token" content="{html.escape(self.server.token)}">'
         texto = texto.replace("<head>", "<head>\n" + meta, 1)
         self._enviar(HTTPStatus.OK, texto.encode("utf-8"), "text/html; charset=utf-8")
@@ -184,7 +210,7 @@ class _Pedido(BaseHTTPRequestHandler):
             with abrir_estado(self.server.pasta_saida) as estado:
                 mensagem = self._decidir(estado, acao, job, dados)
                 restantes = self.server.regravar_pagina(estado, job)
-        except (ErroRevisao, ValueError, TypeError) as e:
+        except (ErroRevisao, ErroSelecao, ValueError, TypeError) as e:
             self._json(HTTPStatus.BAD_REQUEST, ok=False, mensagem=str(e))
             return
         if self.server.ao_decidir is not None:
@@ -207,6 +233,20 @@ class _Pedido(BaseHTTPRequestHandler):
             for vid in alvos:
                 aprovar(estado, pasta, job, vid, variacao)
             return f"aprovados {len(alvos)} vídeo(s) de {job}: variação {variacao}"
+        if acao in ("ignorar", "incluir"):
+            videos = dados.get("videos")
+            if (
+                not isinstance(videos, list)
+                or not 0 < len(videos) <= MAXIMO_VIDEOS_POR_PEDIDO
+                or not all(isinstance(v, str) for v in videos)
+            ):
+                raise ValueError("informe a lista de vídeos")
+            funcao = ignorar if acao == "ignorar" else incluir
+            for vid in videos:
+                funcao(estado, job, vid)
+            if acao == "ignorar":
+                return f"{len(videos)} vídeo(s) de {job} fora da fila (ficam com a capa atual)"
+            return f"{len(videos)} vídeo(s) de {job} de volta à fila"
         raise ValueError(f"ação desconhecida: {acao}")
 
 

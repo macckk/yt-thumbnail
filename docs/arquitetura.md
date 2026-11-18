@@ -17,7 +17,10 @@ Cada etapa lê os artefatos da anterior em `saida/<job>/<video_id>/` e atualiza 
 listado → transcrito → analisado → imagens_geradas → capas_compostas → aprovado → enviado
                                                                        ↘ rejeitado
                                                             aprovado → nao_elegivel (Short em canal sem capa personalizada)
+(listado … capas_compostas) → ignorado (`selecionar`: fica com a capa atual) → volta ao status anterior com --incluir
 ```
+
+`ignorado` tem a ordem mais alta, então o `listar` (que registra `listado` sem regredir) não o traz de volta, e `Estado.listar` o deixa de fora: nenhuma etapa o vê. O status anterior fica em `dados.status_antes`.
 
 O estado fica em `saida/estado.db` (SQLite, módulo `estado.py`), uma linha por `(job, video_id)`:
 
@@ -44,7 +47,8 @@ Um erro **não** muda o status: o vídeo continua onde estava e é tentado de no
 | `imagem.py` | Fase 4: SDXL, variações e ajuste para a saída |
 | `composicao.py` | Fase 5: título sobre as imagens (Pillow), capas e miniaturas |
 | `revisao.py` | Fase 6: backup da capa atual, página de revisão, aprovar/rejeitar |
-| `servidor.py` | servidor local da revisão (`revisar --servir`): botões de aprovar/rejeitar |
+| `selecao.py` | `selecionar`: quais vídeos ganham capa nova (status `ignorado`) e a página de seleção |
+| `servidor.py` | servidor local da revisão e da seleção (`revisar --servir`, `selecionar`): botões |
 | `youtube_api.py` | Fase 7: OAuth por canal, envio e restauração |
 | `orquestracao.py` | Fase 8: `tudo`, liberação de memória entre etapas, resumo do estado |
 | `ambiente.py` | verificação do ambiente |
@@ -218,7 +222,7 @@ Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e
 
 - **Backup** (`baixar_original`): tenta, nesta ordem, a `thumbnail_url` do `meta.json` e `i.ytimg.com/vi/<id>/{maxresdefault,hq720,sddefault,hqdefault}.jpg`; descarta o "sem capa" do YouTube (120×90) e converte WebP/PNG para JPEG. Grava `capa_original.jpg` de forma atômica e **nunca** o sobrescreve; a URL usada fica em `dados.capa_original_url`.
 - **Página** (`preparar_revisao` / `montar_html`): HTML estático em `saida/<job>/revisao.html`, CSS embutido (claro/escuro), imagens por caminho relativo (`<video_id>/capa_N.jpg`), textos escapados. Inclui só os vídeos com status `capas_compostas` (com `--historico`, também os posteriores; pendentes primeiro).
-- **Servidor** (`servidor.py`, `revisar --servir`): `http.server` só em 127.0.0.1, um pedido por vez. GET serve a página (com um token aleatório injetado num `<meta>`) e as imagens `.jpg`/`.png` das pastas dos jobs; POST `/api/aprovar`, `/api/rejeitar` e `/api/aprovar-todos` exigem o token no cabeçalho `X-Token` e o `Host` local, chamam as mesmas funções `aprovar`/`rejeitar` e regravam a página. Sem `--servir`, o JavaScript da página não acha o token e mostra os comandos para copiar.
+- **Servidor** (`servidor.py`, `revisar --servir`): `http.server` só em 127.0.0.1, um pedido por vez. GET serve a página (com um token aleatório injetado num `<meta>`) e as imagens `.jpg`/`.png` das pastas dos jobs; POST `/api/aprovar`, `/api/rejeitar`, `/api/aprovar-todos`, `/api/ignorar` e `/api/incluir` exigem o token no cabeçalho `X-Token` e o `Host` local, chamam as mesmas funções `aprovar`/`rejeitar` e regravam a página. Sem `--servir`, o JavaScript da página não acha o token e mostra os comandos para copiar.
 - **Decisão** (`aprovar` / `rejeitar`): `aprovado` grava `dados.variacao`, `dados.capa` e `dados.decidido_em`; `rejeitado` limpa a variação. `aprovado` e `rejeitado` têm a mesma ordem, então trocar entre eles não é "regredir"; sair de `enviado`/`nao_elegivel` exige `--forcar`.
 
 ## Fase 7 — Autenticação e envio

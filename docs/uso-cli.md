@@ -108,6 +108,32 @@ yt-thumbnail compor
 yt-thumbnail compor --job palestras --forcar
 ```
 
+## Escolher os vídeos
+
+### `yt-thumbnail selecionar [--job] [--tipo] [--nao-abrir] [--porta]`
+
+Abre uma página (pelo mesmo servidor local do `revisar --servir`, só em 127.0.0.1) com os vídeos que **ainda não ganharam capa nova**, dos mais recentes para os mais antigos. Cada um aparece com a capa atual do YouTube, o título e a data. Para Shorts, é a capa vertical.
+
+1. Marque os vídeos que você **não** quer trocar de capa. Clicar no cartão marca e desmarca; o campo de filtro procura pelo título e **Marcar todos (visíveis)** marca o que o filtro mostra.
+2. Clique em **Não trocar a capa dos marcados**. Eles saem da fila, ficam como `ignorado` e mantêm a capa atual.
+3. Feche com **Ctrl+C** e rode o `tudo` normalmente.
+
+Um vídeo ignorado nunca é transcrito, analisado, gerado, revisado nem enviado, e o `listar` não o traz de volta. Para desfazer, abra **Ignorados** no fim da página, marque o vídeo e clique em **Voltar para a fila os marcados**. Ele volta no ponto em que estava, e as imagens já geradas são aproveitadas.
+
+Só dá para ignorar vídeos ainda não decididos na revisão (de `listado` a `capas_compostas`). Um vídeo que já tinha capas prontas também sai da página de revisão.
+
+```powershell
+yt-thumbnail listar --job meditacoes             # busca os vídeos novos da playlist
+yt-thumbnail selecionar --job meditacoes --tipo short
+```
+
+Pela linha de comando, sem a página:
+
+```powershell
+yt-thumbnail selecionar 95lfS2LKuME 68bbQ6lopBE --ignorar
+yt-thumbnail selecionar 95lfS2LKuME --incluir
+```
+
 ## Revisão e aprovação
 
 Nada é enviado ao YouTube sem passar por aqui.

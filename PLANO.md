@@ -174,6 +174,7 @@ yt-thumbnail/
 │  ├─ imagem.py              # Fase 4
 │  ├─ composicao.py          # Fase 5
 │  ├─ revisao.py             # Fase 6
+│  ├─ selecao.py             # selecionar: quais vídeos ganham capa nova, após a 0.1.0
 │  ├─ servidor.py            # revisão com botões (revisar --servir), após a 0.1.0
 │  └─ youtube_api.py         # Fase 7
 ├─ scripts/

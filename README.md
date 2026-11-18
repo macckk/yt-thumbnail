@@ -10,8 +10,9 @@ Para cada vídeo (longo ou Short) de uma playlist pública dos seus canais, o yt
 2. analisa o conteúdo com o Claude Code e escreve um prompt de imagem e um título curto, seguindo um **preset** de identidade visual;
 3. gera a imagem com **SDXL 1.0**, local e sem texto;
 4. escreve o título com Pillow, conferindo contraste e legibilidade em miniatura;
-5. monta uma página para **revisão humana**, com a capa atual ao lado de 3 variações e um botão para aprovar a escolhida;
-6. envia só as capas que você aprovou, pela YouTube Data API e no canal certo, guardando a capa original para poder voltar atrás.
+5. deixa você **escolher quais vídeos** ganham capa nova (os outros mantêm a capa atual);
+6. monta uma página para **revisão humana**, com a capa atual ao lado de 3 variações e um botão para aprovar a escolhida;
+7. envia só as capas que você aprovou, pela YouTube Data API e no canal certo, guardando a capa original para poder voltar atrás.
 
 Shorts ganham capa vertical, com o título no quadrado central:
 
@@ -54,6 +55,7 @@ Tempos medidos com uma RTX 3060 Ti: ~75 s por imagem no SDXL e cerca de 30 minut
 ## Fluxo do dia a dia
 
 ```powershell
+yt-thumbnail selecionar                         # (opcional) marque os vídeos que NÃO devem trocar de capa
 yt-thumbnail tudo                               # da playlist até a revisão (só o que falta)
 yt-thumbnail revisar --servir                   # página com botões: aprove/rejeite, depois Ctrl+C
 yt-thumbnail enviar --aprovados --dry-run       # confira
