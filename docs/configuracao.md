@@ -82,7 +82,7 @@ Resoluções `[largura, altura]` por tipo. `geracao` deve ser múltipla de 8.
 
 | Chave | Padrão | Descrição |
 |---|---|---|
-| `pausa_segundos` | `[5, 10]` | pausa aleatória entre envios |
+| `pausa_segundos` | `[30, 60]` | pausa aleatória entre envios, em segundos. Pausas curtas fazem o YouTube recusar com `uploadRateLimitExceeded` (429) depois de uns 20 envios seguidos; com `[30, 60]`, 15 capas levam ~11 min |
 
 ## `canais`
 

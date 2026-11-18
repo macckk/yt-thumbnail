@@ -123,7 +123,7 @@ class Formatos(_Modelo):
 class Envio(_Modelo):
     """Opções de envio à API do YouTube."""
 
-    pausa_segundos: tuple[float, float] = (5.0, 10.0)
+    pausa_segundos: tuple[float, float] = (30.0, 60.0)
 
 
 class Canal(_Modelo):

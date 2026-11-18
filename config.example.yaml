@@ -49,7 +49,7 @@ formatos:
     saida: [1080, 1920]
 
 envio:
-  pausa_segundos: [5, 10]      # pausa aleatória entre envios
+  pausa_segundos: [30, 60]     # pausa aleatória entre envios (evita o limite do YouTube)
 
 canais:
   espiritual-principal:
