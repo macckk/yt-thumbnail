@@ -49,8 +49,10 @@ Tempos medidos com uma RTX 3060 Ti: ~75 s por imagem no SDXL e cerca de 30 minut
    ```
 2. **Configure** a playlist e o canal: `copy config.example.yaml config.yaml` e edite. Veja [docs/configuracao.md](docs/configuracao.md); para conferir, use `yt-thumbnail validar`.
 3. **Crie o seu OAuth client** no Google Cloud, salve-o em `secrets/client_secret.json` e entre no canal com `yt-thumbnail auth --canal <apelido>`. O passo a passo está em [docs/google-oauth.md](docs/google-oauth.md).
-4. **Gere as capas**: `yt-thumbnail tudo --limite 2` roda da playlist até a revisão; depois rode `yt-thumbnail revisar --servir` para abrir a página de revisão com botões de aprovar.
-5. **Aprove e envie**: clique em **Aprovar esta** na capa escolhida (ou use `yt-thumbnail aprovar <id> --variacao 2`), depois `yt-thumbnail enviar --aprovados --dry-run` e, se estiver tudo certo, `yt-thumbnail enviar --aprovados`.
+4. **Gere as capas**: `yt-thumbnail tudo --limite 2` roda da playlist até a revisão (os vídeos mais recentes primeiro); depois rode `yt-thumbnail revisar --servir` para abrir a página de revisão com botões de aprovar. Antes, se quiser, `yt-thumbnail selecionar` tira da fila os vídeos que devem manter a capa atual.
+5. **Aprove e envie**: clique em **Aprovar esta** na capa escolhida (ou use `yt-thumbnail aprovar <id> --variacao 2`), depois `yt-thumbnail enviar --aprovados --dry-run` e, se estiver tudo certo, `yt-thumbnail enviar --aprovados --limite 15`.
+
+O passo a passo completo, com todos os comandos, está no **[tutorial](docs/tutorial.md)**.
 
 ## Fluxo do dia a dia
 
@@ -59,15 +61,17 @@ yt-thumbnail selecionar                         # (opcional) marque os vídeos q
 yt-thumbnail tudo                               # da playlist até a revisão (só o que falta)
 yt-thumbnail revisar --servir                   # página com botões: aprove/rejeite, depois Ctrl+C
 yt-thumbnail enviar --aprovados --dry-run       # confira
-yt-thumbnail enviar --aprovados                 # envia ao YouTube
+yt-thumbnail enviar --aprovados --limite 15     # envia ao YouTube, em lotes
 ```
 
-Se algo der errado, `yt-thumbnail restaurar <id>` volta a capa original. Detalhes em [docs/uso-cli.md](docs/uso-cli.md).
+Se algo der errado, `yt-thumbnail restaurar <id>` volta a capa original. Passo a passo em [docs/tutorial.md](docs/tutorial.md); todas as opções em [docs/uso-cli.md](docs/uso-cli.md).
 
 ## Limitações conhecidas
 
 - **Login de 7 dias:** com o app do Google Cloud em modo **Teste**, o login vence em 7 dias e é preciso rodar `yt-thumbnail auth` de novo. Publicar o app evita isso; veja [docs/google-oauth.md](docs/google-oauth.md).
 - **Cota da API:** cada capa enviada custa ~50 unidades de uma cota de 10.000 por dia, o que dá ~200 capas por dia. Quando a cota acaba, o lote para e continua no dia seguinte.
+- **Limite de envio do YouTube:** muitas capas seguidas fazem o YouTube recusar por algumas horas (`uploadRateLimitExceeded`). Por isso há uma pausa de 30 a 60 s entre envios; envie em lotes (`--limite 15`).
+- **Só playlists:** o programa vê os vídeos das playlists configuradas. Um vídeo fora delas precisa ser colocado numa playlist para entrar.
 - **Shorts:** a capa é enviada quando o canal permite trocar a capa de Shorts. Se a API recusar (403), o vídeo fica como "não elegível", sem erro. Veja [docs/shorts.md](docs/shorts.md).
 - **Legendas do YouTube:** o YouTube às vezes bloqueia o download das legendas (HTTP 429). Nesses casos, a transcrição é feita pelo Whisper, o que é mais lento.
 - **Texto na imagem:** o SDXL não escreve o título; quem escreve é o Pillow. No Windows, sem `libraqm`, fontes com acentos combinados podem sair deslocadas, por isso o preset usa Newsreader.
@@ -84,6 +88,7 @@ Se algo der errado, `yt-thumbnail restaurar <id>` volta a capa original. Detalhe
 
 | Documento | Conteúdo |
 |---|---|
+| [Tutorial](docs/tutorial.md) | **comece aqui**: todos os comandos para trocar as capas, na ordem |
 | [Instalação no Windows](docs/instalacao-windows.md) | do zero até `yt-thumbnail ambiente` OK |
 | [Configuração](docs/configuracao.md) | referência do `config.yaml` |
 | [Google Cloud e login](docs/google-oauth.md) | OAuth client, login por canal, cota |

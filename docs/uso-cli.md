@@ -1,5 +1,7 @@
 # Uso da CLI
 
+Referência de todos os comandos e opções. Para o passo a passo, na ordem de uso, veja o [tutorial](tutorial.md).
+
 Todos os comandos têm ajuda: `yt-thumbnail --help` e `yt-thumbnail <comando> --help`.
 
 ## Opções globais
@@ -201,13 +203,15 @@ Para cada vídeo aprovado, nesta ordem:
 1. o canal do vídeo precisa ser o canal do job (senão: **pulado**);
 2. o backup `capa_original.jpg` precisa existir (senão: **pulado** — rode `revisar`);
 3. Short em canal com `shorts_capa_personalizada: false` (ou que a API recusa com 403) → **não elegível** (ver [shorts.md](shorts.md));
-4. envio, com pausa aleatória de `envio.pausa_segundos` entre vídeos e novas tentativas em 429/5xx.
+4. envio, com pausa aleatória de `envio.pausa_segundos` (padrão 30–60 s) entre vídeos e novas tentativas em 429/5xx.
+
+Envie em lotes (`--limite 15`): muitas capas seguidas fazem o YouTube responder `uploadRateLimitExceeded` (HTTP 429) por algumas horas. Os vídeos recusados continuam aprovados; rode o mesmo comando mais tarde e só vão os que faltam.
 
 Depois do envio: status `enviado` e `envio.json` na pasta do vídeo (data, variação, resposta da API e histórico). Cota esgotada para o lote (continue no dia seguinte; ver [google-oauth.md](google-oauth.md#4-cota-da-api)).
 
 ```powershell
 yt-thumbnail enviar --aprovados --dry-run
-yt-thumbnail enviar --aprovados --limite 20
+yt-thumbnail enviar --aprovados --limite 15
 ```
 
 ### `yt-thumbnail restaurar ID [ID...] [--job]`
@@ -222,7 +226,8 @@ Roda `listar → transcrever → analisar → gerar → compor → revisar` e **
 
 - Cada etapa só processa o que falta: rodar de novo continua de onde parou (inclusive depois de queda de energia ou erro). Vídeos já enviados, aprovados ou rejeitados não são refeitos; os que aguardam revisão só voltam à página.
 - Erro num vídeo não para o fluxo: fica no estado e aparece no resumo. Uma etapa que falha inteira (ex.: playlist inacessível) também não impede as seguintes de processar o que já existe. Só erro de configuração interrompe.
-- `--limite N`: no máximo N vídeos **novos** por etapa e por job (útil para lotes: `--limite 20` toda noite). Os já processados não contam.
+- `--limite N`: no máximo N vídeos **novos** por etapa e por job, dos publicados mais recentemente para os mais antigos (útil para lotes: `--limite 20` toda noite). Os já processados não contam.
+- Vídeos marcados como `ignorado` no `selecionar` ficam de fora de todas as etapas.
 - `--job` e `--tipo`: só uma playlist e/ou só um formato (`longo` ou `short`).
 - `--ate gerar`: para depois da etapa indicada.
 - `--abrir`: abre a página de revisão (como arquivo) no fim. O padrão é não abrir, pensando em execução por SSH ou agendada; o resumo final sugere `revisar --servir` quando há vídeos aguardando.
@@ -243,7 +248,7 @@ Depois, o fluxo segue com a revisão e o envio:
 ```powershell
 yt-thumbnail revisar --servir                 # aprove/rejeite pelos botões; Ctrl+C encerra
 yt-thumbnail enviar --aprovados --dry-run     # confira o que vai
-yt-thumbnail enviar --aprovados               # envia ao YouTube
+yt-thumbnail enviar --aprovados --limite 15   # envia ao YouTube, em lotes
 ```
 
 Para rodar todo dia sozinho, agende no **Agendador de Tarefas** do Windows: programa `C:\Users\<você>\yt-thumbnail\.venv\Scripts\yt-thumbnail.exe`, argumentos `tudo --limite 20`, iniciar em `C:\Users\<você>\yt-thumbnail`.

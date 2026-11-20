@@ -228,7 +228,7 @@ Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e
 ## Fase 7 — Autenticação e envio
 
 - **OAuth** (`autenticar_navegador`): `InstalledAppFlow` com `secrets/client_secret.json` e os escopos `youtube.upload` + `youtube.readonly`, servidor local numa porta livre. `canal_do_token` (`channels.list mine=true`) identifica o canal; o token vai para `secrets/tokens/<channel_id>.json` (gravação atômica). `carregar_credenciais` renova o token; `invalid_grant` vira uma mensagem pedindo `auth` de novo.
-- **Envio** (`enviar_job`): só status `aprovado`; confere o canal (`meta.json`, ou `videos.list` se faltar), exige `capa_original.jpg`, trata Shorts (`nao_elegivel`), checa o limite de 2 MB, e chama `thumbnails.set` com retentativa exponencial (30 s, 60 s, 120 s) em 429/5xx. `quotaExceeded` para o lote. Cada vídeo enviado grava `envio.json` e passa a `enviado`.
+- **Envio** (`enviar_job`): só status `aprovado`; confere o canal (`meta.json`, ou `videos.list` se faltar), exige `capa_original.jpg`, trata Shorts (`nao_elegivel`), checa o limite de 2 MB, e chama `thumbnails.set` com retentativa exponencial (30 s, 60 s, 120 s) em 429/5xx e pausa aleatória de `envio.pausa_segundos` (30–60 s) entre vídeos. `quotaExceeded` para o lote. Cada vídeo enviado grava `envio.json` e passa a `enviado`.
 - **Restauração** (`restaurar_video`): envia `capa_original.jpg`, acrescenta ao histórico de `envio.json` e marca `rejeitado` (com `restaurado_em`).
 - A API fica atrás do protocolo `ApiCapas`, simulado nos testes.
 
@@ -248,7 +248,7 @@ Idempotente: um vídeo é pulado se `capas.json` e todos os arquivos existirem e
 
 ## Fase 8 — Orquestração
 
-`yt-thumbnail tudo` chama os próprios comandos da CLI em sequência (`listar`, `transcrever`, `analisar`, `gerar`, `compor`, `revisar`), com os mesmos filtros (`--job`, `--tipo`, `--limite`). Como cada etapa é idempotente e o estado só avança, a orquestração não precisa de filas: a "fila" de cada etapa é a lista de vídeos no status anterior.
+`yt-thumbnail tudo` chama os próprios comandos da CLI em sequência (`listar`, `transcrever`, `analisar`, `gerar`, `compor`, `revisar`), com os mesmos filtros (`--job`, `--tipo`, `--limite`). Como cada etapa é idempotente e o estado só avança, a orquestração não precisa de filas: a "fila" de cada etapa é a lista de vídeos no status anterior, na ordem de `Estado.listar` (data de publicação mais recente primeiro, gravada pelo `listar` em `dados.data_publicacao`; os `ignorado` ficam de fora). Por isso o `--limite` sempre pega os vídeos mais novos.
 
 - **Erros**: um `typer.Exit(1)` de uma etapa (vídeos com erro) é anotado e o fluxo segue; `Exit(2)` (uso/configuração) para tudo. Exceções inesperadas também não perdem o log.
 - **Memória**: depois de cada etapa, `gc.collect()` e `torch.cuda.empty_cache()` (`liberar_memoria`). Whisper e SDXL nunca ficam carregados juntos.

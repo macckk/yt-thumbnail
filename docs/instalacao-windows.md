@@ -106,6 +106,8 @@ yt-thumbnail ambiente
 
 Todos os itens devem aparecer como **OK** (GPU, CUDA, FFmpeg, yt-dlp, Claude Code e fontes). O mesmo teste existe como script: `python scripts/check_env.py`.
 
+Pronto para usar: siga o [tutorial](tutorial.md).
+
 ## Desenvolver num PC e executar em outro
 
 Um arranjo comum: o código é editado num PC sem GPU e executado no PC com as GPUs, na mesma rede.

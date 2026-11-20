@@ -166,6 +166,10 @@ Rode `yt-thumbnail revisar` (baixa `capa_original.jpg`) antes de enviar.
 
 O projeto do Google Cloud tem 10.000 unidades por dia (~200 capas). Continue no dia seguinte; o que já foi enviado não é reenviado.
 
+### `uploadRateLimitExceeded` (HTTP 429) ao enviar
+
+O YouTube limita quantas capas um canal troca em sequência; a recusa dura algumas horas. Não é a cota diária e nada se perde: os vídeos continuam `aprovado`. Espere e rode `enviar --aprovados --limite 15` de novo. Para evitar, mantenha a pausa entre envios (`envio.pausa_segundos`, padrão `[30, 60]`) e envie em lotes menores.
+
 ### HTTP 403 ao enviar capa de vídeo longo
 
 O canal precisa estar verificado (por telefone) para usar capas personalizadas: [youtube.com/verify](https://www.youtube.com/verify).
@@ -195,6 +199,14 @@ O servidor foi reiniciado e a aba ainda é da execução anterior (cada execuç�
 ### Os botões não aparecem, só os comandos
 
 A página foi aberta como arquivo (`file:///.../revisao.html`), não pelo servidor. Use o endereço que o `revisar --servir` mostra (`http://127.0.0.1:8765/...`).
+
+### Um vídeo novo do canal não aparece para trocar a capa
+
+O programa só vê os vídeos das playlists configuradas em `jobs`. Coloque o vídeo numa delas pelo YouTube Studio e rode `listar` (ou `tudo`). Se ele aparece no `listar` mas não é processado, veja se não está como `ignorado` (seção **Ignorados** do `selecionar`) ou fora dos `tipos` do job.
+
+### `selecionar`: "já está aprovado; só dá para ignorar antes da revisão"
+
+Vídeos já aprovados, rejeitados ou enviados não voltam para a fila pela seleção. Para não enviar um aprovado, rejeite-o (`rejeitar ID`); para voltar a capa de um já enviado, use `restaurar ID`.
 
 ### `está em mais de um job; use --job`
 

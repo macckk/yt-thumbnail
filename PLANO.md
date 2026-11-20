@@ -317,14 +317,14 @@ listado → transcrito → analisado → imagens_geradas → capas_compostas →
 **Docs:** `docs/uso-cli.md` (fluxo de revisão) + captura de tela em `docs/img/`.
 **Aceite:** aprovar/rejeitar funciona e o estado reflete a escolha.
 
-*Depois da 0.1.0:* a página mostra só os vídeos aguardando decisão (`--historico` mostra todos) e é regravada a cada `aprovar`/`rejeitar`; `revisar --servir` abre a página por um servidor local (só 127.0.0.1, com token) com botões **Aprovar esta**, **Rejeitar** e **Aprovar a variação 1 de todos**, sem copiar comandos.
+*Depois da 0.1.0:* a página mostra só os vídeos aguardando decisão (`--historico` mostra todos) e é regravada a cada `aprovar`/`rejeitar`; `revisar --servir` abre a página por um servidor local (só 127.0.0.1, com token) com botões **Aprovar esta**, **Rejeitar** e **Aprovar a variação 1 de todos**, sem copiar comandos. `selecionar` abre, pelo mesmo servidor, a lista dos vídeos ainda sem capa nova: os marcados viram `ignorado` e saem de todas as etapas. Todas as etapas passaram a processar primeiro os vídeos publicados mais recentemente. Tutorial completo em `docs/tutorial.md`.
 
 ### Fase 7 — Autenticação multicanal e envio ✅ concluída (2026-11-16)
 **Tarefas**
 - `yt-thumbnail auth --canal <apelido>` e `yt-thumbnail canais` (seção 4).
 - OAuth Desktop (`InstalledAppFlow`), escopo `youtube.upload` (ou `youtube.force-ssl`).
 - Antes do envio: conferir `channel_id` do vídeo × token do job; pular se não bater.
-- `thumbnails.set` só para os aprovados; pausa de 5–10 s entre envios; backoff em `429`.
+- `thumbnails.set` só para os aprovados; pausa de 5–10 s entre envios; backoff em `429`. *(Depois da 0.1.0: pausa de 30–60 s, porque 5–10 s esbarrou no `uploadRateLimitExceeded`.)*
 - `invalid_grant` (token vence em 7 dias com o app em modo Testing): avisar e oferecer `yt-thumbnail auth` de novo. Documentar como publicar o app para eliminar o limite.
 - **Shorts:** se o canal tiver `shorts_capa_personalizada: false`, pular o envio e marcar `nao_elegivel` (listar no resumo, sem tratar como erro). Se `true`, enviar normalmente; 403 em Short → `nao_elegivel` com a mensagem da API.
 - `envio.json` com data, variação e resposta da API.

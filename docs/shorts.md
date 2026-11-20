@@ -30,6 +30,10 @@ jobs:
     tipos: [longo]          # [longo, short] para incluir os Shorts
 ```
 
+## Escolher quais Shorts trocam de capa
+
+Para trocar só alguns, abra `yt-thumbnail selecionar --tipo short`: a página mostra a capa vertical atual de cada Short, e os que você marcar ficam com a capa de hoje. Veja o [tutorial](tutorial.md#2-escolher-quais-vídeos-ganham-capa-nova-selecionar).
+
 ## Como o tipo é detectado
 
 Duração ≤ 180 s **e** vídeo vertical → Short; na falta das dimensões, URL `/shorts/`. Ver [arquitetura.md](arquitetura.md#fase-1--listagem-e-detecção-de-tipo).

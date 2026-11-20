@@ -15,6 +15,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - `listar` (e `tudo`) lia só os 100 primeiros vídeos de playlists maiores: o yt-dlp passou a parar na primeira página sem avisar. Agora, quando a playlist informa mais vídeos do que o yt-dlp leu, os que faltam vêm da YouTube Data API (`playlistItems.list`, com o login do canal; ~1 unidade da cota por 50 vídeos). Vídeos privados e excluídos ficam de fora. Sem login, o `listar` avisa quantos ficaram de fora.
 
 ### Documentação
+- **Tutorial** (`docs/tutorial.md`): todos os comandos para trocar as capas, na ordem de uso (listar, selecionar, tudo, revisar, enviar, restaurar), com receitas do dia a dia, quadro-resumo e o significado de cada status. README, uso da CLI, Shorts, arquitetura, instalação e solução de problemas apontam para ele e cobrem `selecionar`, a ordem por data e o limite de envio (`uploadRateLimitExceeded`).
 - Docs revisados para o fluxo com `revisar --servir`: novo print da página de revisão (com os botões), exemplo de `config.yaml` com várias playlists e comparação de tempo entre `fonte_analise: transcricao` e `titulo` (`configuracao.md`), filtros `--job`/`--tipo` no `tudo` (`uso-cli.md`) e problemas comuns do servidor de revisão (`solucao-de-problemas.md`).
 
 ### Alterado
