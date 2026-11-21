@@ -18,7 +18,7 @@ Shorts ganham capa vertical, com o título no quadrado central:
 
 ![Capas de Shorts geradas pelo yt-thumbnail](docs/img/shorts.jpg)
 
-> **Versão 0.1.0.** Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
+> **Versão 0.2.0.** Veja o [CHANGELOG](CHANGELOG.md) e o [plano](PLANO.md).
 
 ## Requisitos
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "yt-thumbnail"
-version = "0.1.0"
+version = "0.2.0"
 description = "Gerador automático de capas para playlists do YouTube (transcrição + Claude + SDXL local + Pillow)."
 readme = "README.md"
 license = "GPL-3.0-or-later"
