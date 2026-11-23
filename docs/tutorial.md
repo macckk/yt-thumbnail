@@ -241,7 +241,7 @@ Não gostou de uma capa já publicada?
 yt-thumbnail restaurar 95lfS2LKuME
 ```
 
-Envia de volta a capa que o vídeo tinha antes (o backup `capa_original.jpg`, salvo na revisão) e marca o vídeo como rejeitado, para ele não ser reenviado. Para tentar outra capa depois, gere de novo (passo 4, "Nenhuma variação ficou boa"), aprove e envie.
+Envia de volta a capa que o vídeo tinha antes (o backup `capa_original.jpg`, salvo na revisão) e marca o vídeo como rejeitado, para ele não ser reenviado. Em Shorts, a capa volta na vertical. Para tentar outra capa depois, gere de novo (passo 4, "Nenhuma variação ficou boa"), aprove e envie.
 
 ---
 

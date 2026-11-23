@@ -61,7 +61,8 @@ def test_itens_selecao_separa_filtra_e_ordena(tmp_path: Path) -> None:
         fila, ign = itens_selecao(e, tmp_path, "j", ["short"])
     assert [i.video_id for i in fila] == ["novo", "velho"]
     assert [i.video_id for i in ign] == ["fora"]
-    assert fila[0].capas[:2] == ("https://i.ytimg.com/vi/novo/oardefault.jpg", "https://t/novo.jpg")
+    assert fila[0].capas[0] == "https://t/novo.jpg"
+    assert not any("oardefault" in c for c in fila[0].capas)
     assert fila[0].data_publicacao == "2026-11-15"
     pagina = montar_pagina("j", fila, ign)
     assert "15/11/2026" in pagina and 'value="novo"' in pagina and "&lt;novo&gt;" in pagina

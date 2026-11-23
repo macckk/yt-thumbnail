@@ -32,7 +32,11 @@ jobs:
 
 ## Escolher quais Shorts trocam de capa
 
-Para trocar só alguns, abra `yt-thumbnail selecionar --tipo short`: a página mostra a capa vertical atual de cada Short, e os que você marcar ficam com a capa de hoje. Veja o [tutorial](tutorial.md#2-escolher-quais-vídeos-ganham-capa-nova-selecionar).
+Para trocar só alguns, abra `yt-thumbnail selecionar --tipo short`: a página mostra a capa atual de cada Short, e os que você marcar ficam com a capa de hoje.
+
+## Backup e restauração
+
+O YouTube só serve a capa atual de um Short em formato horizontal, com a capa no centro e as laterais desfocadas; o backup (`capa_original.jpg`) é essa imagem. O `restaurar` envia a versão vertical (`capa_original_vertical.jpg`): o quadro do vídeo, se o Short não tinha capa personalizada, ou o centro do backup ampliado, se tinha. Ver [uso-cli.md](uso-cli.md#yt-thumbnail-restaurar-id-id---job). Veja o [tutorial](tutorial.md#2-escolher-quais-vídeos-ganham-capa-nova-selecionar).
 
 ## Como o tipo é detectado
 

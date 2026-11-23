@@ -218,6 +218,8 @@ yt-thumbnail enviar --aprovados --limite 15
 
 Envia de volta a capa original (`capa_original.jpg`) e marca o vídeo como `rejeitado` (não será reenviado). Se o vídeo não tinha capa personalizada, o quadro automático que o YouTube usava passa a ser a capa enviada (mesma imagem).
 
+**Shorts:** o YouTube só serve a capa atual em formato horizontal (a capa no centro, laterais desfocadas), então o backup de um Short é horizontal. Para não devolver essa montagem, o `restaurar` envia uma versão vertical, gravada uma vez em `capa_original_vertical.jpg`: o quadro do vídeo em resolução cheia, quando ele é a mesma imagem do backup, ou o centro do backup ampliado, quando o Short já tinha capa personalizada antes. A escolha fica em `envio.json` (`origem`).
+
 ## Tudo de uma vez
 
 ### `yt-thumbnail tudo [--job] [--tipo] [--limite N] [--ate ETAPA] [--abrir]`

@@ -446,7 +446,9 @@ def compor_video(
 ) -> ArquivoCapas:
     """Compõe todas as variações de um vídeo e grava capas, miniaturas e ``capas.json``."""
     for antigo in [*pasta.glob("capa_*.jpg"), *pasta.glob("mini_*.jpg")]:
-        antigo.unlink()
+        # só as variações (capa_1.jpg, mini_2.jpg...): capa_original.jpg é o backup
+        if antigo.stem.split("_", 1)[1].isdigit():
+            antigo.unlink()
     capas = []
     for i, nome_base in enumerate(bases, start=1):
         with Image.open(pasta / nome_base) as base:

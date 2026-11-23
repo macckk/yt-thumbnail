@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageChops, ImageStat, UnidentifiedImageError
 
 from yt_thumbnail.analise.base import ler_analise
 from yt_thumbnail.composicao import ArquivoCapas, ler_capas
@@ -30,6 +30,12 @@ from yt_thumbnail.estado import ORDEM, Estado, RegistroVideo
 from yt_thumbnail.playlist import Meta, ler_meta, pasta_video
 
 ORIGINAL = "capa_original.jpg"
+ORIGINAL_VERTICAL = "capa_original_vertical.jpg"
+"""Versão vertical do backup de um Short (o YouTube só serve a capa atual em 16:9)."""
+LIMIAR_MESMO_QUADRO = 12.0
+"""Diferença média (0–255, em 18×32 tons de cinza) abaixo da qual o recorte do backup e o
+quadro vertical do YouTube são a mesma imagem. Medido em 130 Shorts: mesmo vídeo ≤ 5,
+vídeos diferentes ≥ 24."""
 LARGURA_MINIMA_ORIGINAL = 200
 """Imagens menores que isso são o "sem capa" cinza do YouTube (120×90), não a capa."""
 
@@ -92,6 +98,82 @@ def baixar_original(pasta: Path, meta: Meta, baixar: Baixador = baixar_http) -> 
         temporario.replace(destino)
         return url
     raise ErroRevisao("não foi possível baixar a capa atual (" + "; ".join(falhas[-2:]) + ")")
+
+
+def _assinatura(imagem: Image.Image) -> Image.Image:
+    return imagem.convert("L").resize((18, 32), Image.Resampling.BOX)
+
+
+def diferenca(a: Image.Image, b: Image.Image) -> float:
+    """Diferença média entre duas imagens reduzidas a 18×32 tons de cinza (0 = iguais)."""
+    return ImageStat.Stat(ImageChops.difference(_assinatura(a), _assinatura(b))).mean[0]
+
+
+def recorte_central(imagem: Image.Image, proporcao: float) -> Image.Image:
+    """Faixa central de altura inteira com ``largura / altura = proporcao``.
+
+    O YouTube serve a capa de um Short centralizada numa imagem horizontal, com as laterais
+    desfocadas; o recorte devolve só a capa.
+    """
+    largura = min(imagem.width, round(imagem.height * proporcao))
+    esquerda = (imagem.width - largura) // 2
+    return imagem.crop((esquerda, 0, esquerda + largura, imagem.height))
+
+
+def backup_vertical(pasta: Path, meta: Meta, baixar: Baixador = baixar_http) -> tuple[Path, str]:
+    """Imagem para restaurar a capa de um Short: ``(arquivo, de onde veio)``.
+
+    ``capa_original.jpg`` de um Short é horizontal (a única versão que o YouTube serve).
+    Na primeira vez, grava ``capa_original_vertical.jpg`` (nunca sobrescrito, como o backup):
+
+    - se o recorte central do backup é o mesmo quadro que ``oardefault.jpg`` (o quadro do
+      vídeo em formato vertical, que não muda quando se envia uma capa), usa esse quadro,
+      em resolução cheia;
+    - senão (o Short já tinha capa personalizada, ou o quadro não existe), usa o próprio
+      recorte, ampliado.
+
+    Um backup que já é vertical é devolvido como está.
+
+    Raises:
+        ErroRevisao: sem ``capa_original.jpg``.
+    """
+    destino, original = pasta / ORIGINAL_VERTICAL, pasta / ORIGINAL
+    if destino.is_file():
+        return destino, "backup vertical já existente"
+    if not original.is_file():
+        raise ErroRevisao(f"{meta.video_id}: sem {ORIGINAL} (o backup é feito por `revisar`)")
+    with Image.open(original) as img:
+        backup = img.convert("RGB")
+    if backup.height >= backup.width:
+        return original, "backup já vertical"
+    quadro = None
+    try:
+        with Image.open(io.BytesIO(baixar(_url_quadro(meta.video_id)))) as img:
+            if img.height > img.width:
+                quadro = img.convert("RGB")
+    except (urllib.error.URLError, OSError, UnidentifiedImageError, ValueError):
+        pass
+    if meta.largura and meta.altura and meta.altura > meta.largura:
+        proporcao = meta.largura / meta.altura
+    elif quadro is not None:
+        proporcao = quadro.width / quadro.height
+    else:
+        proporcao = 9 / 16
+    recorte = recorte_central(backup, proporcao)
+    if quadro is not None and diferenca(recorte, quadro) < LIMIAR_MESMO_QUADRO:
+        final, origem = quadro, "quadro vertical do vídeo (igual ao backup)"
+    else:
+        escala = 1920 / recorte.height
+        final = recorte.resize((round(recorte.width * escala), 1920), Image.Resampling.LANCZOS)
+        origem = "recorte ampliado do backup (o Short tinha capa personalizada)"
+    temporario = destino.with_suffix(".tmp")
+    final.save(temporario, "JPEG", quality=92)
+    temporario.replace(destino)
+    return destino, origem
+
+
+def _url_quadro(video_id: str) -> str:
+    return f"https://i.ytimg.com/vi/{video_id}/oardefault.jpg"
 
 
 # --------------------------------------------------------------------------- página

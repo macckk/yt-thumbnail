@@ -54,9 +54,10 @@ def _item(pasta_saida: Path, job: str, r: RegistroVideo) -> ItemSelecao:
     pasta = pasta_video(pasta_saida, job, r.video_id)
     meta = ler_meta(pasta)
     tipo = r.tipo or (meta.tipo if meta else "longo")
+    # A capa atual vem em 16:9; num Short, ela fica centralizada com as laterais desfocadas, e
+    # o cartão vertical (object-fit: cover) mostra só o centro, que é a capa. Não usar o
+    # oardefault.jpg: ele é o quadro do vídeo e não muda quando o Short ganha capa própria.
     capas = urls_capa(r.video_id, meta.thumbnail_url if meta else None)
-    if tipo == "short":  # capa vertical do Short, como aparece no app
-        capas = [f"https://i.ytimg.com/vi/{r.video_id}/oardefault.jpg", *capas]
     if (pasta / ORIGINAL).is_file():
         capas = [f"{r.video_id}/{ORIGINAL}", *capas]
     return ItemSelecao(

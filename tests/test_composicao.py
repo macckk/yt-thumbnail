@@ -218,11 +218,17 @@ def test_compor_job(tmp_path: Path, preset) -> None:
 
         # idempotente
         assert not compor_job(**kw).feitos
-        # imagens geradas de novo -> recompõe só esse vídeo
+        # imagens geradas de novo -> recompõe só esse vídeo, sem apagar o backup da capa atual
+        (lg / "capa_original.jpg").write_bytes(b"backup")
+        (lg / "capa_original_vertical.jpg").write_bytes(b"backup vertical")
+        (lg / "capa_9.jpg").write_bytes(b"variacao velha")
         imagens = lg / "imagens.json"
         futuro = (lg / "capas.json").stat().st_mtime + 10
         os.utime(imagens, (futuro, futuro))
         assert list(compor_job(**kw).feitos) == ["lg"]
+        assert (lg / "capa_original.jpg").read_bytes() == b"backup"
+        assert (lg / "capa_original_vertical.jpg").read_bytes() == b"backup vertical"
+        assert not (lg / "capa_9.jpg").exists()
 
 
 def test_compor_job_sem_imagens_registra_erro(tmp_path: Path, preset) -> None:

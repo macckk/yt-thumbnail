@@ -22,7 +22,13 @@ from typing import Any, Protocol
 
 from yt_thumbnail.estado import Estado
 from yt_thumbnail.playlist import ler_meta, pasta_video
-from yt_thumbnail.revisao import ORIGINAL
+from yt_thumbnail.revisao import (
+    ORIGINAL,
+    Baixador,
+    ErroRevisao,
+    backup_vertical,
+    baixar_http,
+)
 
 ESCOPOS = [
     "https://www.googleapis.com/auth/youtube.upload",
@@ -412,8 +418,13 @@ def restaurar_video(
     job: str,
     video_id: str,
     channel_id: str,
+    baixar: Baixador = baixar_http,
 ) -> dict[str, Any]:
-    """Envia de volta a capa original (``capa_original.jpg``) e marca o vídeo como rejeitado."""
+    """Envia de volta a capa original (``capa_original.jpg``) e marca o vídeo como rejeitado.
+
+    Shorts recebem a versão vertical do backup (:func:`~yt_thumbnail.revisao.backup_vertical`);
+    a escolha fica em ``envio.json`` (``arquivo`` e ``origem``).
+    """
     pasta = pasta_video(pasta_saida, job, video_id)
     original = pasta / ORIGINAL
     meta = ler_meta(pasta)
@@ -423,11 +434,23 @@ def restaurar_video(
         raise ErroYouTube(f"{video_id}: sem {ORIGINAL} (o backup é feito por `revisar`)")
     if meta.channel_id and meta.channel_id != channel_id:
         raise ErroYouTube(f"{video_id}: é do canal {meta.channel_id}, não de {channel_id}")
-    resposta = _enviar_com_retentativa(api, video_id, original, time.sleep)
+    arquivo, origem = original, "backup"
+    if meta.tipo == "short":
+        try:
+            arquivo, origem = backup_vertical(pasta, meta, baixar)
+        except ErroRevisao as e:
+            raise ErroYouTube(str(e)) from e
+    resposta = _enviar_com_retentativa(api, video_id, arquivo, time.sleep)
     quando = _agora()
     _gravar_envio(
         pasta,
-        {"acao": "restaurar", "enviado_em": quando, "arquivo": ORIGINAL, "resposta": resposta},
+        {
+            "acao": "restaurar",
+            "enviado_em": quando,
+            "arquivo": arquivo.name,
+            "origem": origem,
+            "resposta": resposta,
+        },
     )
     estado.registrar(
         job,
