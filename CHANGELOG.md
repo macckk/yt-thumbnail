@@ -4,6 +4,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+## [0.2.1] — 2026-11-23
+
+Correções no backup da capa atual. Nenhum backup tinha sido perdido.
+
 ### Corrigido
 - **`compor` apagava o backup da capa atual** (`capa_original.jpg`): limpava `capa_*.jpg` antes de recompor. Num vídeo já enviado, recompor (`compor --forcar`, ou `gerar --forcar` e depois `compor`/`tudo`) e rodar `revisar` de novo faria a capa nova virar o "backup", e o `restaurar` perderia a capa antiga. Agora só as variações (`capa_N.jpg`, `mini_N.jpg`) são apagadas. Nenhum backup tinha sido perdido (conferidos os 409 vídeos enviados).
 - **`restaurar` em Short enviava uma imagem horizontal**: o backup de um Short é a versão 16:9 que o YouTube serve (capa no centro, laterais desfocadas). Agora o `restaurar` envia `capa_original_vertical.jpg`: o quadro vertical do vídeo, se ele bate com o backup, ou o centro do backup ampliado, se o Short já tinha capa personalizada. Testado nos 142 Shorts enviados: 128 voltam com o quadro em resolução cheia, 14 com o recorte.
